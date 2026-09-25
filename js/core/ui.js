@@ -143,6 +143,8 @@
       return w;
     },
     hints(ctx, list, x, y, o = {}) {
+      // in-game key hints can be turned off in the settings (menus always show them)
+      if (!o.force && R6.Save && R6.Save.settings.hints === false && R6.Engine.scene && R6.Engine.scene.pausable) return;
       let cx = x;
       if (o.align === 'center') {
         let tw = 0; ctx.save(); for (const [k, l] of list) { ctx.font = UI.font(14, 800); const kw = Math.max(24, ctx.measureText(k).width + 12); ctx.font = UI.font(15, 600); tw += kw + 7 + ctx.measureText(l).width + 22; } ctx.restore();

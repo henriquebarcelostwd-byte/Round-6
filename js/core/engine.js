@@ -61,7 +61,10 @@
       else if (E.paused) R6.PauseMenu && R6.PauseMenu.update(rdt);
       else {
         // pause key
-        if (E.scene && E.scene.pausable && R6.Input.actP('pause') && !R6.Dialog.active && !(E.scene.blockPause && E.scene.blockPause())) E.pause(true);
+        // ESC pauses during free play; inside cutscenes/dialogues ESC is "hold to skip", so there only P pauses
+        const inCut = !!(E.scene && E.scene.runner && E.scene.runner.update) || R6.Dialog.active;
+        const wantPause = inCut ? R6.Input.pressed('KeyP') : R6.Input.actP('pause');
+        if (E.scene && E.scene.pausable && wantPause && !(E.scene.blockPause && E.scene.blockPause())) E.pause(true);
         else {
           R6.Dialog.update(rdt);
           for (let i = E.timers.length - 1; i >= 0; i--) { const tm = E.timers[i]; tm.t -= dt; if (tm.t <= 0) { E.timers.splice(i, 1); tm.fn(); } }

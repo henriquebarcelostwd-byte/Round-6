@@ -217,7 +217,7 @@
       R6.Engine.after(0.6, () => { R6.Audio.sfx('gun'); R6.Engine.flash('#ff1133', 0.3); });
       this.lose({ reason, wait: 3.2 });
     }
-    debugWin() { this.choosing = false; if (!this.shape) this.setShape('circle'); this.phase = 'play'; this.pts.forEach(p => p.c = 1); this.success(); }
+    debugWin() { this.choosing = false; if (!this.shape) this.setShape('circle'); if (this.campaign && R6.State.s && !this.bots.length) this.planBots(); this.phase = 'play'; this.pts.forEach(p => p.c = 1); this.success(); }
     // ---------------- render ----------------
     render(ctx) {
       // playground floor + tin tables

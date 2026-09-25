@@ -209,7 +209,7 @@
       for (const e of this.events) e.update && e.update(dt);
       this.events = this.events.filter(e => !e.done);
       // camera
-      if (!this.runner || !this.cam.busy) { if (!this.runner) { if (this.vote && this.voteCam) this.cam.follow(this.voteCam.x, this.voteCam.y, 0.95); else this.cam.follow(this.pl.x, this.pl.y - 20, this.cfg.zoom || 1.15); } }
+      if (!this.runner || !this.cam.busy) { if (!this.runner) { if (this.vote && this.voteCam) this.cam.follow(this.voteCam.x, this.voteCam.y, 0.8); else this.cam.follow(this.pl.x, this.pl.y - 20, this.cfg.zoom || 1.15); } }
       this.cam.update(dt);
       // leave trigger: all tasks done + guards call
       if (!this.leaving && !this.busy && !this.vote && !this.riot && this.readyToLeave() && !this.calling) { this.calling = true; R6.Engine.after(this.cfg.callDelay != null ? this.cfg.callDelay : 2.5, () => this.callGuards()); }
@@ -389,7 +389,7 @@
       const order = this.bots.filter(b => !b.dead).sort((a, b) => U.dist2(a.x, a.y, B.x, B.y) - U.dist2(b.x, b.y, B.x, B.y));
       order.forEach((b, k) => { const sl = slots[k % slots.length]; b.lie = null; b.clearAnim(); b.idleAnim = 'idle'; b.ai.cd = 999; b.ai.act = 'vote'; const q = this.map.nearestFree(sl.x + U.rand(-6, 6), sl.y + U.rand(-5, 5)); b.goTo(this.world, q.x, q.y, false, () => b.face('up')); });
       this.pl.lie = null; const pq = this.map.nearestFree(B.x + 20, B.y + 80); this.pl.goTo(this.world, pq.x, pq.y, false, () => this.pl.face('up'));
-      this.voteCam = { x: B.x, y: B.y + 10 };
+      this.voteCam = { x: B.x, y: B.y + 90 };
       R6.Music.play('tension'); R6.Music.setIntensity(0.4);
       R6.Dialog.announce(V.text || 'Conforme a cláusula 3, o jogo pode ser encerrado se a maioria concordar. Vamos votar. O para continuar, X para encerrar.', null, 3.5);
     }
@@ -518,7 +518,7 @@
       ctx.fillStyle = '#0b0c10'; ctx.fillRect(0, 0, R6.W, R6.H);
       cam.begin(ctx);
       this.world.draw(ctx, cam);
-      if (this.prompt && !this.busy) { ctx.save(); ctx.translate(this.prompt.x - 30, this.prompt.y); const s = 1 / cam.zoom; ctx.scale(s, s); R6.UI.keyHint(ctx, 'E', this.prompt.label, 0, 0); ctx.restore(); }
+      if (this.prompt && !this.busy && !this.vote && !this.leaving && !this.riot) { ctx.save(); ctx.translate(this.prompt.x - 30, this.prompt.y); const s = 1 / cam.zoom; ctx.scale(s, s); R6.UI.keyHint(ctx, 'E', this.prompt.label, 0, 0); ctx.restore(); }
       cam.end(ctx);
       // lighting
       if (this.lights < 0.98) {
@@ -546,12 +546,14 @@
     }
     drawVoteUI(ctx) {
       const V = this.vote; const tot = V.list.length + 1;
-      R6.UI.panel(ctx, 340, 110, 600, 80, { fill: 'rgba(6,8,12,.85)' });
+      if (R6.Dialog.active && !(R6.Dialog.cur && R6.Dialog.cur.auto)) return;
+      const Y = R6.H - 150;
+      R6.UI.panel(ctx, 340, Y, 600, 80, { fill: 'rgba(6,8,12,.85)' });
       const w = 560; const o = V.O / tot, x = V.X / tot;
-      ctx.fillStyle = '#3a86ff'; ctx.fillRect(360, 130, w * o, 20); ctx.fillStyle = '#ff3b5c'; ctx.fillRect(360 + w - w * x, 130, w * x, 20);
-      ctx.fillStyle = '#fff'; ctx.fillRect(360 + w / 2 - 1, 124, 2, 32);
-      R6.UI.text(ctx, 'O ' + V.O, 360, 178, { size: 22, fam: 'mono', color: '#3a86ff' }); R6.UI.text(ctx, V.X + ' X', 920, 178, { size: 22, fam: 'mono', color: '#ff3b5c', align: 'right' });
-      R6.UI.text(ctx, 'MAIORIA: ' + (Math.floor(tot / 2) + 1), 640, 178, { size: 14, align: 'center', color: '#bbb', weight: 800 });
+      ctx.fillStyle = '#3a86ff'; ctx.fillRect(360, Y + 20, w * o, 20); ctx.fillStyle = '#ff3b5c'; ctx.fillRect(360 + w - w * x, Y + 20, w * x, 20);
+      ctx.fillStyle = '#fff'; ctx.fillRect(360 + w / 2 - 1, Y + 14, 2, 32);
+      R6.UI.text(ctx, 'O ' + V.O, 360, Y + 68, { size: 22, fam: 'mono', color: '#3a86ff' }); R6.UI.text(ctx, V.X + ' X', 920, Y + 68, { size: 22, fam: 'mono', color: '#ff3b5c', align: 'right' });
+      R6.UI.text(ctx, 'MAIORIA: ' + (Math.floor(tot / 2) + 1), 640, Y + 68, { size: 14, align: 'center', color: '#bbb', weight: 800 });
     }
     drawRelations(ctx) {
       const S = R6.State; const list = S.aliveBots().filter(p => p.key || Math.abs(p.rel) >= 15).sort((a, b) => (b.key ? 1 : 0) - (a.key ? 1 : 0) || b.rel - a.rel).slice(0, 14);

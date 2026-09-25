@@ -117,7 +117,7 @@
         vol('master', 'VOLUME GERAL'), vol('music', 'MÚSICA'), vol('sfx', 'EFEITOS SONOROS'),
         { label: 'DIFICULDADE', sub: () => '◀ ' + DIFF_PT[S.difficulty] + ' ▶', onLeft: () => { S.difficulty = cyc(DIFF, S.difficulty, -1); save(); }, onRight: () => { S.difficulty = cyc(DIFF, S.difficulty, 1); save(); }, action: () => { S.difficulty = cyc(DIFF, S.difficulty, 1); save(); } },
         { label: 'VELOCIDADE DO TEXTO', sub: () => '◀ ' + SPD_PT[Math.max(0, SPD.indexOf(S.textSpeed))] + ' ▶', onLeft: () => { S.textSpeed = cyc(SPD, SPD.includes(S.textSpeed) ? S.textSpeed : 1, -1); save(); }, onRight: () => { S.textSpeed = cyc(SPD, SPD.includes(S.textSpeed) ? S.textSpeed : 1, 1); save(); }, action: () => { S.textSpeed = cyc(SPD, SPD.includes(S.textSpeed) ? S.textSpeed : 1, 1); save(); } },
-        tog('shake', 'TREMOR DE TELA'), tog('hints', 'DICAS DE CONTROLE'), tog('subtitles', 'LEGENDAS DE ANÚNCIOS'),
+        tog('shake', 'TREMOR DE TELA'), tog('hints', 'DICAS DE CONTROLE NA TELA'),
         { label: 'TELA CHEIA', sub: () => document.fullscreenElement ? 'SIM' : 'NÃO', action: () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); } catch (e) { } } },
         { label: 'MOSTRAR FPS', sub: () => R6.Engine.showFps ? 'SIM' : 'NÃO', action: () => { R6.Engine.showFps = !R6.Engine.showFps; } },
       ];
@@ -177,7 +177,7 @@
     },
     render(ctx) {
       const k = U.ease.outCubic(Math.min(1, Pause.t * 5));
-      ctx.save(); ctx.fillStyle = 'rgba(3,4,7,' + 0.72 * k + ')'; ctx.fillRect(0, 0, R6.W, R6.H); ctx.restore();
+      ctx.save(); ctx.fillStyle = 'rgba(3,4,7,' + 0.86 * k + ')'; ctx.fillRect(0, 0, R6.W, R6.H); ctx.restore();
       R6.UI.text(ctx, 'PAUSA', 90 - (1 - k) * 40, 110, { size: 72, fam: 'title', color: '#fff', spacing: 8, alpha: k });
       ctx.fillStyle = R6.UI.T.accent; ctx.fillRect(90, 124, 160 * k, 3);
       if (Pause.sub) { Pause.sub.draw(ctx, 110, 170, 540); }
@@ -190,7 +190,7 @@
         R6.Char.portrait(ctx, S.s.player.look, x + 60, y + 60, 90, 'neutral', R6.Engine.rt, false);
         R6.UI.text(ctx, '#' + U.pad(S.s.player.num) + '  ' + S.s.player.name, x + 118, y + 44, { size: 22, weight: 800, color: '#fff', maxW: 360 });
         const sc = R6.Engine.scene;
-        const where = R6.Campaign && R6.Campaign.active ? 'TEMPORADA ' + S.s.season + ' · ' + R6.chapterLabel(R6.Campaign.CH[R6.Campaign.idx] && R6.Campaign.CH[R6.Campaign.idx].id) : (sc && sc.title) || 'TREINO';
+        const where = R6.Campaign && R6.Campaign.active ? 'TEMPORADA ' + S.s.season + ' · ' + R6.chapterLabel(R6.Campaign.CH[R6.Campaign.idx] && R6.Campaign.CH[R6.Campaign.idx].id) : (sc && (sc.title || (sc.rules && (() => { try { const r = sc.rules(); return r && r.title; } catch (e) { return null; } })()))) || 'TREINO';
         R6.UI.text(ctx, where, x + 118, y + 70, { size: 14, color: R6.UI.T.accent, weight: 800, maxW: 360 });
         R6.UI.text(ctx, 'PRÊMIO ' + U.money(S.s.prize) + '   ·   VIVOS ' + S.alive, x + 118, y + 94, { size: 14, fam: 'mono', color: '#f2c14e', maxW: 370 });
         R6.UI.text(ctx, 'ALIADOS', x + 24, y + 150, { size: 13, color: '#999', weight: 800, spacing: 3 });

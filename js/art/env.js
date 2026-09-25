@@ -54,8 +54,8 @@
       for (let x = 0; x < this.w; x += 600) ctx.drawImage(wall, x, g - 520);
       // station signs + ads
       for (let x = 150; x < this.w; x += 700) {
-        ctx.fillStyle = '#12355b'; ctx.fillRect(x, g - 420, 260, 50); ctx.fillStyle = '#fff'; ctx.font = R6.UI.font(26, 800); ctx.fillText('ESTAÇÃO ' + ['GONGDEOK', 'SSANGMUN', 'HANGANG'][(x / 700) % 3 | 0], x + 14, g - 386);
-        ctx.fillStyle = '#e9c46a'; ctx.beginPath(); ctx.arc(x + 236, g - 395, 13, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#12355b'; ctx.fillRect(x, g - 420, 330, 50); ctx.fillStyle = '#fff'; ctx.font = R6.UI.font(26, 800); ctx.fillText('ESTAÇÃO ' + ['GONGDEOK', 'SSANGMUN', 'HANGANG'][(x / 700) % 3 | 0], x + 14, g - 386, 268);
+        ctx.fillStyle = '#e9c46a'; ctx.beginPath(); ctx.arc(x + 306, g - 395, 13, 0, TAU); ctx.fill();
         ctx.fillStyle = '#2b2b30'; ctx.fillRect(x + 330, g - 380, 180, 240); ctx.fillStyle = grad(ctx, x + 330, g - 380, x + 510, g - 140, [[0, '#f28c28'], [1, '#e8336d']]); ctx.fillRect(x + 338, g - 372, 164, 224);
         R6.UI.text(ctx, 'EMPRÉSTIMO', x + 420, g - 300, { size: 24, align: 'center', color: '#fff', fam: 'title' }); R6.UI.text(ctx, 'SEM CONSULTA', x + 420, g - 272, { size: 18, align: 'center', color: '#fff', weight: 800 });
       }

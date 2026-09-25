@@ -32,12 +32,13 @@
       const w = 720, h = 150 + r.lines.length * 30 + (r.keys ? 70 : 0), x = (R6.W - w) / 2, y = (R6.H - h) / 2 - 10;
       R6.UI.panel(ctx, x, y, w, h, { r: 10, fill: 'rgba(10,12,18,.94)', stroke: U.rgba(R6.UI.T.accent, 0.6), lw: 1.5 });
       R6.UI.shapeIcon(ctx, r.icon || 'circle', x + 50, y + 55, 20, R6.UI.T.accent, 4);
-      R6.UI.text(ctx, r.title, x + 92, y + 58, { size: 50, fam: 'title', color: '#fff', spacing: 3 });
+      let ts = 50; while (ts > 26 && R6.UI.measure(ctx, r.title, ts, 400, 'title') + r.title.length * 3 > w - 120) ts -= 2;
+      R6.UI.text(ctx, r.title, x + 92, y + 58, { size: ts, fam: 'title', color: '#fff', spacing: 3 });
       if (r.sub) R6.UI.text(ctx, r.sub, x + 94, y + 86, { size: 16, color: R6.UI.T.dim, weight: 700, spacing: 2 });
       let yy = y + 122;
       for (const l of r.lines) { R6.UI.shapeIcon(ctx, 'square', x + 44, yy - 6, 4, R6.UI.T.accent2, 2, true); R6.UI.text(ctx, l, x + 60, yy, { size: 18, color: '#e9e3d8', weight: 500, maxW: w - 90 }); yy += 30; }
-      if (r.keys) R6.UI.hints(ctx, r.keys, x + w / 2, yy + 22, { align: 'center' });
-      const dif = { normal: 'NORMAL', hard: 'HARD', extreme: 'EXTREME' }[R6.Save.diff()];
+      if (r.keys) R6.UI.hints(ctx, r.keys, x + w / 2, yy + 22, { align: 'center', force: true });
+      const dif = { normal: 'NORMAL', hard: 'DIFÍCIL', extreme: 'EXTREMO' }[R6.Save.diff()];
       R6.UI.text(ctx, 'DIFICULDADE: ' + dif, x + 24, y + h - 18, { size: 13, align: 'left', color: R6.Save.diff() === 'normal' ? '#8bd17c' : R6.Save.diff() === 'hard' ? '#f2994a' : '#ff3b5c', weight: 800, spacing: 2 });
       const k = (Math.sin(this.rulesT * 4) + 1) / 2;
       R6.UI.text(ctx, 'ESPAÇO / CLIQUE PARA COMEÇAR', x + w - 24, y + h - 18, { size: 15, align: 'right', color: U.rgba('#ffffff', 0.5 + k * 0.5), weight: 800, spacing: 3 });
@@ -125,7 +126,7 @@
           if (S.s) {
             R6.UI.text(ctx, `#${U.pad(S.s.player.num)} ${S.s.player.name}  ·  TEMPORADA ${S.s.season}  ·  ${S.s.player.gamesWon} JOGOS VENCIDOS`, R6.W / 2, 262, { size: 18, align: 'center', color: '#bbb', alpha: k, spacing: 2 });
           }
-          this.menu.draw(ctx, R6.W / 2 - 170, 360, 340, 52, 12);
+          this.menu.draw(ctx, R6.W / 2 - 220, 360, 440, 52, 12);
           R6.UI.vignette(ctx, 0.8);
         },
       };

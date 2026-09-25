@@ -229,7 +229,7 @@
         ctx.strokeStyle = '#e8336d'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(R6.W - 150, R6.H - 35, 10, -Math.PI / 2, -Math.PI / 2 + U.TAU * Math.min(1, R.skipHold / 0.7)); ctx.stroke();
         ctx.restore();
       } else if (!R.skipping && R.lb > 0.5 && this.host.skippable !== false) {
-        ctx.save(); ctx.globalAlpha = 0.45; R6.UI.text(ctx, 'Segure ESC para pular', R6.W - 24, R6.H - 26, { size: 13, align: 'right', color: '#bbb' }); ctx.restore();
+        ctx.save(); ctx.globalAlpha = 0.45; R6.UI.text(ctx, 'Segure ESC para pular · P pausa', R6.W - 24, R6.H - 26, { size: 13, align: 'right', color: '#bbb' }); ctx.restore();
       }
     }
   }
