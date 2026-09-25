@@ -160,10 +160,10 @@
     land(p, t) { const k = Math.max(0, 1 - t / 0.2); p.rHip = 0.6 * k; p.lHip = 0.5 * k; p.rKnee = 1.3 * k; p.lKnee = 1.2 * k; p.bob = 8 * k; p.rSh = 0.9 * k; p.lSh = 0.8 * k; },
     pull(p, t, o) {
       const k = (Math.sin(t * (o.pullRate || 5)) + 1) / 2 * (o.effort || 1);
-      p.lean = -0.45 - k * 0.2; p.rSh = 1.45; p.lSh = 1.4; p.rEl = 0.25 + k * 0.4; p.lEl = 0.3 + k * 0.4;
+      p.lean = -0.45 - k * 0.2; p.rSh = 1.05; p.lSh = 1.0; p.rEl = 0.2 + k * 0.3; p.lEl = 0.25 + k * 0.3;
       p.rHip = 0.55; p.rKnee = 0.05; p.lHip = -0.35; p.lKnee = 0.7 + k * 0.2; p.bob = 5 + k * 2; p.expr = 'strain'; p.item = 'rope';
     },
-    heave(p, t) { p.lean = -0.9; p.rSh = 1.35; p.lSh = 1.3; p.rEl = 0.2; p.lEl = 0.2; p.rHip = 0.9; p.rKnee = 0; p.lHip = 0.2; p.lKnee = 1.4; p.bob = 14; p.expr = 'strain'; p.item = 'rope'; },
+    heave(p, t) { p.lean = -0.9; p.rSh = 0.9; p.lSh = 0.85; p.rEl = 0.2; p.lEl = 0.2; p.rHip = 0.9; p.rKnee = 0; p.lHip = 0.2; p.lKnee = 1.4; p.bob = 14; p.expr = 'strain'; p.item = 'rope'; },
     throw(p, t) {
       if (t < 0.25) { const k = U.ease.outQuad(t / 0.25); p.rSh = 0.2 + 2.8 * k; p.rEl = 0.4; p.lean = -0.15 * k; p.lSh = 0.5; }
       else { const k = U.ease.inCubic(U.clamp((t - 0.25) / 0.12, 0, 1)); p.rSh = 3.0 - 2.3 * k; p.rEl = 0.4 - 0.3 * k; p.lean = -0.15 + 0.55 * k; p.lSh = 0.5; p.rHip = 0.3; p.rKnee = 0.5 * k; }
@@ -687,7 +687,7 @@
     pose.expr = expr || pose.expr || 'neutral';
     if (!talking) pose.mouth = 0;
     pose.rSh = 0.05; pose.lSh = 0.05; pose.handsFace = 0; pose.armOut = 0; pose.bob = 0; pose.lean = 0;
-    draw(ctx, look, x, y + size * 1.55, { view: 'front', pose, scale: sc, shadow: false, lod: 2 });
+    draw(ctx, look, x, y + 90 * sc * (look.h || 1) + size * 0.12, { view: 'front', pose, scale: sc, shadow: false, lod: 2 });
     ctx.restore();
     ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 1.5; ctx.strokeRect(x - size / 2 + 0.5, y - size / 2 + 0.5, size - 1, size - 1); ctx.restore();
   }

@@ -38,9 +38,9 @@
       for (const l of r.lines) { R6.UI.shapeIcon(ctx, 'square', x + 44, yy - 6, 4, R6.UI.T.accent2, 2, true); R6.UI.text(ctx, l, x + 60, yy, { size: 18, color: '#e9e3d8', weight: 500, maxW: w - 90 }); yy += 30; }
       if (r.keys) R6.UI.hints(ctx, r.keys, x + w / 2, yy + 22, { align: 'center' });
       const dif = { normal: 'NORMAL', hard: 'HARD', extreme: 'EXTREME' }[R6.Save.diff()];
-      R6.UI.text(ctx, 'DIFICULDADE: ' + dif, x + w - 20, y + 30, { size: 13, align: 'right', color: R6.Save.diff() === 'normal' ? '#8bd17c' : R6.Save.diff() === 'hard' ? '#f2994a' : '#ff3b5c', weight: 800, spacing: 2 });
+      R6.UI.text(ctx, 'DIFICULDADE: ' + dif, x + 24, y + h - 18, { size: 13, align: 'left', color: R6.Save.diff() === 'normal' ? '#8bd17c' : R6.Save.diff() === 'hard' ? '#f2994a' : '#ff3b5c', weight: 800, spacing: 2 });
       const k = (Math.sin(this.rulesT * 4) + 1) / 2;
-      R6.UI.text(ctx, 'ESPAÇO / CLIQUE PARA COMEÇAR', R6.W / 2, y + h - 18, { size: 15, align: 'center', color: U.rgba('#ffffff', 0.5 + k * 0.5), weight: 800, spacing: 3 });
+      R6.UI.text(ctx, 'ESPAÇO / CLIQUE PARA COMEÇAR', x + w - 24, y + h - 18, { size: 15, align: 'right', color: U.rgba('#ffffff', 0.5 + k * 0.5), weight: 800, spacing: 3 });
       ctx.restore();
     }
     win(o = {}) {
