@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Round 6: The Last Game</title>
+<meta name="description" content="Jogo 2D em Canvas inspirado no universo de Round 6 / Squid Game — campanha das temporadas 1, 2 e 3, jogos extras, IA social e múltiplos finais.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Semi+Condensed:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" tabindex="0" aria-label="Round 6 — área do jogo"></canvas>
+  <div id="boot"><div class="shapes"><i class="c"></i><i class="t"></i><i class="s"></i></div><p>CARREGANDO…</p></div>
+</div>
+<noscript>Este jogo precisa de JavaScript habilitado.</noscript>
+
+<!-- core -->
+<script src="js/core/util.js"></script>
+<script src="js/core/input.js"></script>
+<script src="js/core/audio.js"></script>
+<script src="js/core/save.js"></script>
+<script src="js/core/camera.js"></script>
+<script src="js/core/particles.js"></script>
+<script src="js/core/ui.js"></script>
+<script src="js/core/engine.js"></script>
+<!-- art -->
+<script src="js/art/character.js"></script>
+<script src="js/art/props.js"></script>
+<script src="js/art/env.js"></script>
+<!-- world -->
+<script src="js/world/roster.js"></script>
+<script src="js/world/state.js"></script>
+<script src="js/world/tilemap.js"></script>
+<script src="js/world/actors.js"></script>
+<!-- systems -->
+<script src="js/systems/dialogue.js"></script>
+<script src="js/systems/cutscene.js"></script>
+<script src="js/systems/elim.js"></script>
+<script src="js/systems/hud.js"></script>
+<script src="js/systems/gamebase.js"></script>
+<!-- games -->
+<script src="js/games/ddakji.js"></script>
+<script src="js/games/redlight.js"></script>
+<script src="js/games/dalgona.js"></script>
+<script src="js/games/tugofwar.js"></script>
+<script src="js/games/marbles.js"></script>
+<script src="js/games/glassbridge.js"></script>
+<script src="js/games/squidfinal.js"></script>
+<script src="js/games/s2pre.js"></script>
+<script src="js/games/sixlegs.js"></script>
+<script src="js/games/mingle.js"></script>
+<script src="js/games/revolt.js"></script>
+<script src="js/games/hideseek.js"></script>
+<script src="js/games/jumprope.js"></script>
+<script src="js/games/skysquid.js"></script>
+<script src="js/games/escape.js"></script>
+<script src="js/games/extras.js"></script>
+<!-- scenes -->
+<script src="js/scenes/hub.js"></script>
+<script src="js/scenes/vote.js"></script>
+<script src="js/scenes/story.js"></script>
+<script src="js/scenes/campaign.js"></script>
+<script src="js/scenes/endings.js"></script>
+<script src="js/scenes/menu.js"></script>
+<script src="js/scenes/creation.js"></script>
+<script src="js/scenes/meta.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

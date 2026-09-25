@@ -1,0 +1,40 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../css/style.css"></head><body>
+<div id="wrap"><canvas id="game"></canvas><div id="boot" class="hide"></div></div>
+<script src="../js/core/util.js"></script><script src="../js/core/input.js"></script><script src="../js/core/audio.js"></script>
+<script src="../js/core/save.js"></script><script src="../js/core/camera.js"></script><script src="../js/core/particles.js"></script>
+<script src="../js/core/ui.js"></script><script src="../js/core/engine.js"></script><script src="../js/art/character.js"></script>
+<script src="../js/art/props.js"></script><script src="../js/art/env.js"></script><script src="../js/world/roster.js"></script>
+<script src="../js/world/state.js"></script><script src="../js/world/tilemap.js"></script><script src="../js/world/actors.js"></script>
+<script src="../js/systems/dialogue.js"></script><script src="../js/systems/cutscene.js"></script><script src="../js/systems/elim.js"></script><script src="../js/systems/hud.js"></script>
+<script>
+R6.Engine.init(document.getElementById('game'));
+const anims = ['idle','walk','run','scared','push','punch','kick','block','celebrate','cry','talk','sleep','eat','die','jump','pull','throw','hang','sit','fall','trip','handsup','crouch','kneel'];
+const looks = [
+ R6.Char.makeLook({num:456, hs:'short'}), R6.Char.makeLook({num:67, fem:true, hs:'short'}), R6.Char.makeLook({outfit:'guard', mask:'triangle'}),
+ R6.Char.makeLook({outfit:'frontman'}), R6.Char.makeLook({outfit:'vip', vip:'deer'}), R6.Char.makeLook({outfit:'suit', hs:'slick'}),
+ R6.Char.makeLook({num:1, age:2, hs:'perm', hair:'#aaa'}), R6.Char.makeLook({fem:true, hs:'long', num:222}), R6.Char.makeLook({outfit:'tux', hs:'slick'}),
+];
+const mode = location.hash.slice(1) || 'side';
+R6.Engine.start({ update(){}, render(ctx){
+  ctx.fillStyle='#3a4a4a'; ctx.fillRect(0,0,1280,720);
+  const t = R6.Engine.rt;
+  if (mode==='side' || mode==='front') {
+    anims.forEach((a,i)=>{ const x = 70 + (i%8)*150, y = 200 + Math.floor(i/8)*230;
+      R6.Char.draw(ctx, looks[i%looks.length], x, y, {view: mode, dir:1, anim:a, t: (a==='die'||a==='fall'||a==='trip')? (t%2): t, scale:1.3});
+      R6.UI.text(ctx, a, x, y+24, {size:14, align:'center'}); });
+  } else if (mode==='looks') {
+    looks.forEach((l,i)=>{ const x=80+i*135; R6.Char.draw(ctx,l,x,250,{view:'front',anim:'idle',t,scale:1.6}); R6.Char.draw(ctx,l,x,500,{view:'side',anim:'walk',t,scale:1.6}); R6.Char.draw(ctx,l,x,690,{view:'back',anim:'walk',t,scale:1.3}); });
+  } else if (mode==='td') {
+    for (let i=0;i<60;i++){ const l=looks[i%looks.length]; const x=60+(i%12)*100, y=100+Math.floor(i/12)*130; R6.Char.drawTD(ctx,l,x,y,['down','up','left','right'][i%4], i%3? 'walk':'idle', t, {scale:0.46*1.6}); }
+  } else if (mode==='props') {
+    R6.Props.doll(ctx, 200, 650, 1.4, {t, face: (Math.sin(t)+1)/2, glow: (Math.sin(t*2)+1)/2});
+    R6.Props.piggy(ctx, 560, 300, 120, 0.4, t);
+    R6.Props.chulsu(ctx, 900, 650, 1.2, {t});
+    R6.Props.card(ctx, 1100, 150, 200, {flip: t});
+    R6.Props.ddakji(ctx, 1100, 400, 60, '#2458c9', '#c83434', t*2);
+    R6.Props.coffin(ctx, 1150, 600, 60, 130);
+    for (let i=0;i<4;i++) R6.Props.glassPanel(ctx, 700+i*70, 600, 60, 30, {broken: i==2, cracked: i==1});
+    R6.UI.logo(ctx, 640, 60, 90, t, {sub:'THE LAST GAME'});
+  }
+}});
+</script></body></html>
