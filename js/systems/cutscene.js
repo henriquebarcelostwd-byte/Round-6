@@ -156,13 +156,13 @@
           if (sk) { a.x = to[0]; a.y = to[1]; a.stop(); return null; }
           let fin = false; a.goTo(host.world, to[0], to[1], st.run, () => { fin = true; if (st.face) a.face(st.face); });
           if (st.async) return null;
-          let tt = 0; return this.task(dt => { tt += dt; if (tt > (st.timeout || 20)) { a.stop(); return true; } return fin; });
+          let tt = 0; return this.task(dt => { tt += dt; if (this.skipping) { a.x = to[0]; a.y = to[1]; a.stop(); if (st.face) a.face(st.face); return true; } if (tt > (st.timeout || 20)) { a.stop(); return true; } return fin; });
         } else {
           if (sk) { a.x = to[0]; if (to[1] != null) a.z = to[1]; a.target = null; a.anim = 'idle'; if (st.face) a.dir = st.face; return null; }
           if (st.speed) a.speedMul = st.speed;
           a.walkTo(to[0], to[1], st.run);
           if (st.async) return null;
-          return this.task(() => { if (!a.target && st.face) a.dir = st.face; return !a.target; });
+          return this.task(() => { if (this.skipping && a.target) { a.x = a.target.x; a.z = a.target.z; a.target = null; a.anim = 'idle'; } if (!a.target && st.face) a.dir = st.face; return !a.target; });
         }
       }
       if (st.face) { const a = this.actor(st.face); if (a) { if (a.goTo) { if (st.to) a.faceTo(...st.to); else a.face(st.dir); } else { if (st.view) a.view = st.view; if (st.dir) a.dir = st.dir; if (st.toward) { const b = this.actor(st.toward); if (b) a.dir = b.x > a.x ? 1 : -1; } } } return null; }

@@ -147,7 +147,7 @@
     const s = 1 / Math.max(0.7, zoom); const k = Math.min(1, e.t * 5); const bob = Math.sin(e.t * 8) * 2;
     ctx.save(); ctx.translate(x, y - 10 + bob); ctx.scale(s * U.ease.outBack(k), s * U.ease.outBack(k));
     ctx.globalAlpha *= Math.min(1, (e.dur - e.t) * 3);
-    const col = { '!': '#ff3b5c', '?': '#3a86ff', '♥': '#ff5d8f', '#': '#ff6b35', '…': '#ddd', 'z': '#9fc2ff', '♪': '#f2c14e', '$': '#f2c14e', 'T': '#9fd4ff' }[e.icon] || '#fff';
+    const col = { 'O': '#3a86ff', 'X': '#ff3b5c', '!': '#ff3b5c', '?': '#3a86ff', '♥': '#ff5d8f', '#': '#ff6b35', '…': '#ddd', 'z': '#9fc2ff', '♪': '#f2c14e', '$': '#f2c14e', 'T': '#9fd4ff' }[e.icon] || '#fff';
     ctx.fillStyle = 'rgba(15,15,20,.85)'; ctx.beginPath(); ctx.arc(0, 0, 10, 0, U.TAU); ctx.fill();
     ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();
     R6.UI.text(ctx, e.icon === 'z' ? 'zZ' : e.icon === '#' ? '💢' : e.icon === 'T' ? '😢' : e.icon, 0, 1, { size: e.icon === '#' || e.icon === 'T' ? 11 : 14, align: 'center', base: 'middle', color: col, weight: 800 });

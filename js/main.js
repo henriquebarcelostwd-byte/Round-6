@@ -19,6 +19,12 @@
       R6.Engine.go(sc, { t: 'cut' });
       return sc;
     },
+    // jump straight into a campaign chapter (fresh state; season roster rebuilt when needed)
+    chapter(id) {
+      R6.debug.newState(); const C = R6.Campaign; const i = C.CH.findIndex(c => c.id === id); if (i < 0) return false;
+      const ss = C.CH[i].season; if (ss > 1) { R6.State.s.season = ss; R6.State.buildRoster(2); }
+      C.active = true; C.run(i); return true;
+    },
     win() { const s = R6.Engine.scene; if (s && s.debugWin) s.debugWin(); },
     lose() { const s = R6.Engine.scene; if (s && s.lose) s.lose({ reason: 'debug' }); },
     skipRules() { const s = R6.Engine.scene; if (s && s.phase === 'rules') { s.phase = 'play'; s.begin && s.begin(); } },

@@ -22,8 +22,8 @@ const season = +(process.argv[4] || 1);
   // move to "ASSINAR O CONTRATO" (last item) and confirm
   await p.evaluate(() => { const sc = R6.Engine.scene; sc.menu.i = sc.menu.items.length - 1; sc.menu.choose(); });
   await p.waitForTimeout(2500);
-  await p.evaluate((mode) => {
-    const A = window.__auto = { log: [], lastCh: null, choices: [], stuck: 0, lastT: Date.now(), done: false, mode };
+  await p.evaluate(([mode, HOLD]) => {
+    const A = window.__auto = { log: [], lastCh: null, choices: [], stuck: 0, lastT: Date.now(), done: false, mode, hold: HOLD };
     const pick = (cur) => {
       const cs = cur.choices; let i = 0;
       if (A.mode === 'random') i = Math.floor(Math.random() * cs.length);
@@ -40,6 +40,7 @@ const season = +(process.argv[4] || 1);
         const key = ch + '|' + sc.name;
         if (key !== A.lastCh) { A.log.push(key + ' [alive ' + R6.State.alive + ']'); A.lastCh = key; A.lastT = Date.now(); }
         if (sc.name === 'menu' && A.log.length > 3) { A.done = true; return; }
+        if (A.hold && Date.now() - A.lastT < A.hold) return;
         if (sc.name === 'defeatMenu') { A.log.push('DEFEAT!'); A.done = true; return; }
         if (D.active && D.cur) { if (D.cur.choices) D.finish(pick(D.cur)); else if (!D.cur.auto) D.finish(); return; }
         if (sc.runner && sc.runner.skip && !sc.runner.skipping) { sc.runner.skip(); }
@@ -57,12 +58,12 @@ const season = +(process.argv[4] || 1);
         if (sc.name === 'credits') { sc.y = -99999; return; }
       } catch (e) { A.log.push('DRIVER ERR ' + e.message); }
     }, 200);
-  }, mode);
+  }, [mode, +(process.env.HOLD || 0)]);
   const t0 = Date.now(); let lastLen = 0, lastChange = Date.now(), shots = 0;
   while (Date.now() - t0 < maxS * 1000) {
     await p.waitForTimeout(1000);
     const st = await p.evaluate(() => ({ n: __auto.log.length, last: __auto.lastCh, done: __auto.done }));
-    if (st.n !== lastLen) { lastLen = st.n; lastChange = Date.now(); if (process.env.SHOTS) { await p.waitForTimeout(700); await p.screenshot({ path: SP + '/flow_' + String(shots++).padStart(2, '0') + '_' + st.last.replace(/[^a-z0-9_]/gi, '_') + '.png' }); } }
+    if (st.n !== lastLen) { lastLen = st.n; lastChange = Date.now(); if (process.env.SHOTS) { await p.waitForTimeout(+(process.env.SHOTDELAY || 700)); await p.screenshot({ path: SP + '/flow_' + String(shots++).padStart(2, '0') + '_' + st.last.replace(/[^a-z0-9_]/gi, '_') + '.png' }); } }
     if (st.done) break;
     if (Date.now() - lastChange > 45000) {
       await p.screenshot({ path: SP + '/flow_stuck.png' });

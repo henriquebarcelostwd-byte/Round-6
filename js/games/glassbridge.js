@@ -106,10 +106,11 @@
     updVest(dt) {
       const I = R6.Input; const n = this.people.length + 1;
       const mv = d => { let v = this.vestMenuI; for (let k = 0; k < n; k++) { v = ((v - 1 + d + n) % n) + 1; if (!this.taken.has(v)) break; } this.vestMenuI = v; R6.Audio.sfx('hover'); };
-      if (I.actP('right')) mv(1); if (I.actP('left')) mv(-1); if (I.actP('down')) mv(4); if (I.actP('up')) mv(-4);
+      const C = this.vestCols(); if (I.actP('right')) mv(1); if (I.actP('left')) mv(-1); if (I.actP('down')) mv(C); if (I.actP('up')) mv(-C);
       const m = I.mouse; if (this.vRects) this.vRects.forEach((r, i) => { if (U.rectHit(m.x, m.y, r) && !this.taken.has(i + 1)) { if (m.moved) this.vestMenuI = i + 1; if (m.pressed) { this.vestMenuI = i + 1; this.pickVest(); } } });
       if (I.actP('confirm')) this.pickVest();
     }
+    vestCols() { const n = this.people.length + 1; return n <= 16 ? Math.min(8, n) : Math.max(8, Math.ceil(Math.sqrt(n * 2.6))); }
     pickVest() { R6.Audio.sfx('confirm'); this.assignOrder(this.vestMenuI); this.stage = 'rules'; this.phase = 'rules'; this.rulesT = 0; }
     updPerson(a, dt) {
       a.t += dt;
@@ -353,13 +354,15 @@
       R6.UI.text(ctx, 'ESCOLHA UM NÚMERO', 640, 90, { size: 56, fam: 'title', align: 'center', color: '#fff', spacing: 4 });
       R6.UI.text(ctx, 'Os coletes foram dispostos em ordem. Você não sabe para que serve o número.', 640, 126, { size: 17, align: 'center', color: '#bbb' });
       const n = this.people.length + 1; this.vRects = [];
-      const cols = Math.min(8, n), w = 110, h = 90, x0 = 640 - (cols * w + (cols - 1) * 12) / 2;
+      const cols = this.vestCols(), rows = Math.ceil(n / cols), g = n > 60 ? 4 : 12;
+      const w = Math.min(110, (1180 - (cols - 1) * g) / cols), h = Math.min(90, (500 - (rows - 1) * g) / rows), x0 = 640 - (cols * w + (cols - 1) * g) / 2;
+      const fs = Math.max(12, Math.min(44, h * 0.5));
       for (let v = 1; v <= n; v++) {
-        const i = v - 1, x = x0 + (i % cols) * (w + 12), y = 170 + Math.floor(i / cols) * (h + 12);
+        const i = v - 1, x = x0 + (i % cols) * (w + g), y = 160 + Math.floor(i / cols) * (h + g);
         const r = { x, y, w, h }; this.vRects.push(r); const taken = this.taken.has(v), hov = this.vestMenuI === v;
         R6.UI.panel(ctx, x, y, w, h, { fill: taken ? 'rgba(40,40,44,.6)' : hov ? '#e8336d' : 'rgba(14,16,22,.95)', stroke: hov ? '#fff' : 'rgba(255,255,255,.15)', shadow: false, lw: hov ? 2 : 1 });
-        R6.UI.text(ctx, String(v), x + w / 2, y + 56, { size: 44, fam: 'title', align: 'center', color: taken ? '#555' : '#fff' });
-        if (taken) R6.UI.text(ctx, 'OCUPADO', x + w / 2, y + 78, { size: 11, align: 'center', color: '#777', weight: 800 });
+        R6.UI.text(ctx, String(v), x + w / 2, y + h * (h > 40 ? 0.58 : 0.5), { size: fs, fam: 'title', align: 'center', base: h > 40 ? 'alphabetic' : 'middle', color: taken ? '#555' : '#fff' });
+        if (taken && h > 40) R6.UI.text(ctx, 'OCUPADO', x + w / 2, y + h * 0.86, { size: 11, align: 'center', color: '#777', weight: 800 });
       }
       R6.UI.hints(ctx, [['SETAS/MOUSE', 'escolher'], ['ENTER', 'vestir']], 640, R6.H - 30, { align: 'center' });
     }

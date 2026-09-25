@@ -562,8 +562,8 @@
           ctx.fillStyle = tc(O.trim, look); ctx.beginPath(); ctx.moveTo(-5, topY - 1); ctx.lineTo(0, topY + 5); ctx.lineTo(5, topY - 1); ctx.closePath(); ctx.fill();
           ctx.strokeStyle = tc(U.shade(O.main, -0.35), look); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(0, topY + 5); ctx.lineTo(0, hipY + 1); ctx.stroke();
           if (look.num) {
-            ctx.fillStyle = tc('#f4f4ef', look); ctx.fillRect(sw * 0.08, topY + 7, 12.5, 6.5);
-            if (detail > 1) R6.UI.text(ctx, U.pad(look.num), sw * 0.08 + 6.25, topY + 10.6, { size: 5.4, align: 'center', base: 'middle', color: '#111', weight: 800, fam: 'mono' });
+            const pw = Math.min(10, sw - 4.2); ctx.fillStyle = tc('#f4f4ef', look); ctx.fillRect(1.3, topY + 7, pw, 6);
+            if (detail > 1) R6.UI.text(ctx, U.pad(look.num), 1.3 + pw / 2, topY + 10.3, { size: 5, align: 'center', base: 'middle', color: '#111', weight: 800, fam: 'mono', maxW: pw - 1 });
           }
           if (look.badge) { R6.UI.shapeIcon(ctx, look.badge === 'O' ? 'o' : 'x', -sw * 0.5, topY + 10, 2.4, look.badge === 'O' ? '#3a86ff' : '#ff3b5c', 1.4); }
         }
@@ -571,7 +571,7 @@
         if (O.belt) { ctx.fillStyle = tc(O.belt, look); ctx.fillRect(-ww, hipY - 3, ww * 2, 3); ctx.fillStyle = '#777'; ctx.fillRect(-2, hipY - 3, 4, 3); }
         if (O.robe) { ctx.fillStyle = tc(O.trim, look); ctx.fillRect(-1.2, topY, 2.4, 60); }
       } else {
-        if (look.outfit === 'green' && look.num && detail > 1) { ctx.fillStyle = tc('#f4f4ef', look); ctx.fillRect(-8, topY + 7, 16, 9); R6.UI.text(ctx, U.pad(look.num), 0, topY + 11.8, { size: 7.5, align: 'center', base: 'middle', color: '#111', weight: 800, fam: 'mono' }); }
+        if (look.outfit === 'green' && look.num && detail > 1) { ctx.fillStyle = tc('#f4f4ef', look); ctx.fillRect(-8, topY + 7, 16, 9); R6.UI.text(ctx, U.pad(look.num), 0, topY + 11.8, { size: 7.5, align: 'center', base: 'middle', color: '#111', weight: 800, fam: 'mono' , maxW: 14.5 }); }
       }
       if (look.vest) {
         const c = look.vest === 'blue' ? '#2f6fd1' : look.vest === 'red' ? '#d13a3a' : '#1a1a1c';

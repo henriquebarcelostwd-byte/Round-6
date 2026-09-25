@@ -209,7 +209,7 @@
       for (const e of this.events) e.update && e.update(dt);
       this.events = this.events.filter(e => !e.done);
       // camera
-      if (!this.runner || !this.cam.busy) { if (!this.runner) this.cam.follow(this.pl.x, this.pl.y - 20, this.cfg.zoom || 1.15); }
+      if (!this.runner || !this.cam.busy) { if (!this.runner) { if (this.vote && this.voteCam) this.cam.follow(this.voteCam.x, this.voteCam.y, 0.95); else this.cam.follow(this.pl.x, this.pl.y - 20, this.cfg.zoom || 1.15); } }
       this.cam.update(dt);
       // leave trigger: all tasks done + guards call
       if (!this.leaving && !this.busy && !this.vote && !this.riot && this.readyToLeave() && !this.calling) { this.calling = true; R6.Engine.after(this.cfg.callDelay != null ? this.cfg.callDelay : 2.5, () => this.callGuards()); }
@@ -383,6 +383,13 @@
         return { p, v: Math.random() < pO ? 'O' : 'X' };
       }).sort((a, b) => a.p.num - b.p.num);
       this.vote = { list, i: 0, t: 0, O: 0, X: 0, playerDone: false, done: false, plNum: S.s.player.num, speed: 0.06, menu: null };
+      // everyone gathers in front of the board, facing it
+      const B = this.D.board; this.byId = new Map(this.bots.map(b => [b.p.id, b]));
+      const P = this.D.pig; const slots = []; for (let r = 0; r < 16; r++) for (let c = -13; c <= 13; c++) { const x = B.x + c * 34 + (r % 2) * 17, y = B.y + 110 + r * 30; if (U.dist(x, y, P.x, P.y - 150) > 95) slots.push({ x, y }); }
+      const order = this.bots.filter(b => !b.dead).sort((a, b) => U.dist2(a.x, a.y, B.x, B.y) - U.dist2(b.x, b.y, B.x, B.y));
+      order.forEach((b, k) => { const sl = slots[k % slots.length]; b.lie = null; b.clearAnim(); b.idleAnim = 'idle'; b.ai.cd = 999; b.ai.act = 'vote'; const q = this.map.nearestFree(sl.x + U.rand(-6, 6), sl.y + U.rand(-5, 5)); b.goTo(this.world, q.x, q.y, false, () => b.face('up')); });
+      this.pl.lie = null; const pq = this.map.nearestFree(B.x + 20, B.y + 80); this.pl.goTo(this.world, pq.x, pq.y, false, () => this.pl.face('up'));
+      this.voteCam = { x: B.x, y: B.y + 10 };
       R6.Music.play('tension'); R6.Music.setIntensity(0.4);
       R6.Dialog.announce(V.text || 'Conforme a cláusula 3, o jogo pode ser encerrado se a maioria concordar. Vamos votar. O para continuar, X para encerrar.', null, 3.5);
     }
@@ -398,6 +405,7 @@
         if (!V.playerDone && (!next || next.p.num > V.plNum)) { V.waiting = true; this.playerVote(); return; }
         if (!next) { this.finishVote(); return; }
         V[next.v]++; next.p.lastVote = next.v; V.i++; V.last = next; R6.Audio.sfx('vote', { vol: 0.25, gap: 0.02 });
+        const va = this.byId && this.byId.get(next.p.id); if (va && !va.dead) { va.emo(next.v, 1.4); if (V.list.length - V.i < 12 || Math.random() < 0.05) va.setAnim('vote', 0.8); }
         if (V.list.length - V.i < 6) V.speed = 0.5; // slow down at the end for suspense
       }
     }
@@ -426,7 +434,8 @@
       for (const b of this.bots) if (this.season === 2) b.look.badge = b.p.lastVote || null;
       R6.Audio.sfx('buzzer');
       R6.Banner.show(res === 'O' ? 'O VENCEU' : 'X VENCEU', V.O + ' × ' + V.X + (V.rigged ? ' · O ÚLTIMO VOTO VEIO DO #001' : ''), { color: res === 'O' ? '#3a86ff' : '#ff3b5c', dur: 3.4, big: true });
-      R6.Engine.after(3.6, () => { this.vote = null; if (this.cfg.vote.after) this.cfg.vote.after(this, res); else this.done({ vote: res }); });
+      for (const e of V.list) { const va = this.byId && this.byId.get(e.p.id); if (va && !va.dead && V.mine) { if (e.v === V.mine) { if (Math.random() < 0.15) va.emo('♥', 1.5); } else if (Math.random() < 0.1) va.say(U.pick(['Traidor.', 'Você não entende nada.', 'Covarde.', 'Egoísta.']), 2.2); } }
+      R6.Engine.after(3.6, () => { this.vote = null; for (const b of this.bots) { if (b.ai) { b.ai.cd = U.rand(0, 4); b.ai.act = null; } } if (this.cfg.vote.after) this.cfg.vote.after(this, res); else this.done({ vote: res }); });
     }
     drawBoard(c) {
       const B = this.D.board;

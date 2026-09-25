@@ -427,7 +427,7 @@
     const TABS = ['PERSONAGENS', 'FINAIS', 'CENAS', 'ESTATÍSTICAS'];
     let tab = 0, i = 0;
     const chars = [];
-    for (const s of [1, 2]) { const K = R6.Roster.KEYS[s] || {}; for (const k in K) chars.push({ key: k, season: s, d: K[k], look: R6.Char.makeLook(Object.assign({ num: K[k].num, seed: K[k].num * 13 + s }, K[k].look)) }); }
+    for (const s of [1, 2]) { const K = R6.Roster.KEYS[s] || {}; for (const k in K) chars.push({ key: k, season: s, d: K[k], look: R6.Char.makeLook(Object.assign({ num: K[k].num, seed: K[k].num * 13 + s, beard: null, glasses: false }, K[k].look), new U.RNG(K[k].num * 13 + s)) }); }
     chars.push({ key: 'guard', season: 1, d: { name: 'Guarda', num: 0, arch: '—', bio: 'Macacão rosa, máscara com uma forma. Círculos trabalham, triângulos armam, quadrados mandam.' }, look: R6.Char.makeLook({ outfit: 'guard', mask: 'square', seed: 3 }) });
     chars.push({ key: 'frontman', season: 1, d: { name: 'Front Man', num: 0, arch: '—', bio: 'Máscara negra angulosa. Observa tudo das telas. Diz que o jogo é igualdade.' }, look: R6.Char.makeLook({ outfit: 'frontman', seed: 4 }) });
     chars.push({ key: 'recruiter', season: 1, d: { name: 'O Recrutador', num: 0, arch: '—', bio: 'Terno impecável, maleta com dois ddakji. Um tapa para cada derrota.' }, look: R6.Char.makeLook({ outfit: 'suit', hs: 'slick', hair: '#1a1411', skin: '#e9c3a0', seed: 77, glasses: false, beard: null }) });
