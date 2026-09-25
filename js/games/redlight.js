@@ -84,7 +84,7 @@
       this.cam.to(this.pl.x, this.pl.y - 60, 1.05, 3.8);
       R6.Music.play('game'); R6.Music.setIntensity(0.1);
       R6.Audio.loop('crowd', 0.45); R6.Audio.loop('wind', 0.15);
-      R6.Dialog.announce(this.endless ? 'Rodada ' + (this.rounds + 1) + '. A boneca está mais rápida.' : 'Bem-vindos ao primeiro jogo: Batatinha Frita 1, 2, 3. Quem se mover depois que a boneca virar será eliminado.');
+      R6.Dialog.announce(this.endless ? 'Rodada ' + (this.rounds + 1) + '. A boneca está mais rápida.' : 'Bem-vindos ao primeiro jogo: Batatinha Frita 1, 2, 3. Quem se mover depois que a boneca virar será eliminado.', null, 3.2);
       this.light = 'green'; this.lightT = 0; this.greenDur = this.intro + 3.0;
       this.songDelay = this.intro; this.songDur = 3.0;
     }
@@ -346,7 +346,7 @@
     timeUp() {
       if (this.endless) { this.over = true; this.pendingTimeout = [this.pl]; return; }
       this.over = true; this.overT = 0; this.light = 'red'; this.face = 1;
-      R6.Audio.sfx('buzzer'); R6.Dialog.announce('O tempo acabou. Jogadores que não cruzaram a linha: eliminados.');
+      R6.Audio.sfx('buzzer'); R6.Dialog.announce('O tempo acabou. Jogadores que não cruzaram a linha: eliminados.', null, 2.5);
       this.pendingTimeout = this.world.actors.filter(a => !a.dead && a.solid && ((a.ai && !a.ai.finished) || (a === this.pl && !this.playerFinished))).sort((a, b) => b.y - a.y);
     }
     finishGame() {

@@ -77,7 +77,7 @@
       // accelerate toward desired velocity
       const ax = this.dvx - this.vx, ay = this.dvy - this.vy; const al = Math.hypot(ax, ay);
       const maxA = this.accel * dt;
-      if (al > maxA) { this.vx += ax / al * maxA; this.vy += ay / al * maxA; } else { this.vx = this.dvx; this.vy = this.dvy; }
+      if (al > maxA && al > 0.0001) { this.vx += ax / al * maxA; this.vy += ay / al * maxA; } else { this.vx = this.dvx; this.vy = this.dvy; }
       if (this.frozen) { this.vx = 0; this.vy = 0; }
       this.x += this.vx * dt; this.y += this.vy * dt;
       if (world.map) { const c = world.map.collide(this.x, this.y, this.r); this.x = c.x; this.y = c.y; }

@@ -12,7 +12,9 @@
       D.show(arr);
     },
     narr(text, onDone) { D.show({ mode: 'narr', text, onDone }); },
-    announce(text, onDone) { R6.Audio.sfx('announce'); D.show({ mode: 'announce', text, onDone, name: 'ANÚNCIO' }); },
+    announce(text, onDone, auto) { R6.Audio.sfx('announce'); D.show({ mode: 'announce', text, onDone, name: 'ANÚNCIO', auto }); },
+    // non-blocking in-game line (auto-dismiss)
+    toast(who, text, auto = 2.6, o = {}) { D.show(Object.assign({ who, text, auto }, o)); },
     choose(prompt, choices, o = {}) { D.show(Object.assign({ text: prompt, choices }, o)); },
     next() {
       const L = D.queue.shift();

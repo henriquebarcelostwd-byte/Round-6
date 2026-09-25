@@ -8,7 +8,7 @@
     canvas: null, ctx: null, scale: 1, dpr: 1, time: 0, rt: 0, frame: 0, dt: 0,
     scene: null, trans: null, timeScale: 1, slow: null, flashC: null, flashT: 0, flashD: 0,
     paused: false, timers: [], fps: 60, showFps: false, bufA: null, bufB: null, running: false,
-    shakeT: 0, shakeM: 0, errors: [],
+    shakeT: 0, shakeM: 0, errors: [], lodBias: 0,
 
     init(canvas) {
       E.canvas = canvas; E.ctx = canvas.getContext('2d', { alpha: false });
@@ -37,8 +37,9 @@
       E.running = true; let last = performance.now();
       const loop = now => {
         let rdt = (now - last) / 1000; last = now;
-        if (rdt > 0.1) rdt = 0.1;
+        if (!(rdt > 0)) rdt = 0; if (rdt > 0.1) rdt = 0.1;
         E.fps = U.lerp(E.fps, 1 / Math.max(0.001, rdt), 0.05);
+        E._q = (E._q || 0) + rdt; if (E._q > 1.5) { E._q = 0; if (E.fps < 42) E.lodBias = Math.min(0.3, E.lodBias + 0.06); else if (E.fps > 57) E.lodBias = Math.max(0, E.lodBias - 0.03); }
         try { E.tick(rdt); } catch (err) { E.reportError(err); }
         requestAnimationFrame(loop);
       };

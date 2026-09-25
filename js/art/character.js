@@ -641,7 +641,8 @@
     if (o.mouth != null) pose.mouth = Math.max(pose.mouth, o.mouth);
     if (o.item) pose.item = o.item;
     const eff = scale * (o.zoom || 1);
-    const lod = o.lod != null ? o.lod : eff < 0.32 ? 0 : eff < 0.75 ? 1 : 2;
+    const lb = R6.Engine ? R6.Engine.lodBias : 0;
+    const lod = o.lod != null ? o.lod : eff < 0.32 + lb ? 0 : eff < 0.75 ? 1 : 2;
     ctx.save();
     ctx.translate(x, y);
     if (o.alpha != null) ctx.globalAlpha *= o.alpha;
