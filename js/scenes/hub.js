@@ -100,6 +100,7 @@
         const lk = Object.assign({}, p.look, { badge: p.badge || null });
         const a = this.world.add(new R6.Actor({ p, look: lk, x: pos.x, y: pos.y, speed: 60 + p.tr.spd * 30, runSpeed: 120 + p.tr.spd * 40, id: p.key ? 'k:' + p.key : 'b' + p.num }));
         a.bunk = bunk; a.canOpenDoors = false;
+        if (!p.inv) p.inv = Math.random() < 0.35 ? [U.pick(['bread', 'egg', 'bread', 'lighter', 'spoon'].filter(k => R6.ITEMS[k]))].filter(Boolean) : [];
         a.ai = { act: null, t: U.rand(0, 6), cd: U.rand(1, 8), partner: null };
         a.brain = (b, dt) => this.botBrain(b, dt);
         this.bots.push(a);
@@ -145,7 +146,11 @@
       else this.afterIntro();
     }
     afterIntro() {
-      if (this.cfg.vote) return this.startVote();
+      if (this.cfg.vote) {
+        if (this.cfg.askIntent) return this.askIntent();
+        if (this.cfg.voteAfter) return this.beginPreVote();
+        return this.startVote();
+      }
       if (this.cfg.riot) return this.startRiot();
       if (this.cfg.meal) R6.Engine.after(2, () => this.startMeal());
       if (this.cfg.onStart) this.cfg.onStart(this);
@@ -195,6 +200,7 @@
       this.world.update(dt);
       if (this.runner) this.runner.update(dt);
       this.lights = U.approach(this.lights, this.night && !this.riotLightsOn ? (this.riot ? 0.06 : 0.35) : 1, dt * 1.5);
+      if (this.preVote) this.updPreVote(dt);
       if (this.vote) this.updVote(dt);
       if (this.riot) this.updRiot(dt);
       if (!this.busy && !this.leaving && !this.vote) this.updPlayer(dt);
@@ -345,6 +351,27 @@
       this.bots.forEach(b => { b.ai.cd = U.rand(0, 3); b.ai.ate = false; });
     }
     // ---------- vote (O / X) ----------
+    askIntent() {
+      const S = R6.State;
+      R6.Dialog.show({ who: S.player, text: 'A votação vai começar em breve. O que você pretende fazer?', choices: [
+        { t: 'Convencer os outros a votar O (continuar)', color: '#3a86ff', cb: () => { this.intendVote = 'O'; this.cfg.persuade = { side: 'O' }; this.beginPreVote(); } },
+        { t: 'Convencer os outros a votar X (encerrar)', color: '#ff3b5c', cb: () => { this.intendVote = 'X'; this.cfg.persuade = { side: 'X' }; this.beginPreVote(); } },
+        { t: 'Ficar quieto e observar', cb: () => { this.beginPreVote(); } },
+      ] });
+    }
+    beginPreVote() {
+      const dur = this.cfg.voteAfter || 0;
+      if (!dur) return this.startVote();
+      this.preVote = { t: dur, dur };
+      this.cfg.objective = this.cfg.persuade ? 'Converse com os jogadores e convença-os a votar ' + this.cfg.persuade.side + '. Vá até o PLACAR para iniciar a votação.' : 'Circule pelo dormitório. Vá até o PLACAR quando estiver pronto.';
+      R6.Toast.show('A votação começa em ' + Math.round(dur) + 's — ou quando você for até o placar.', { color: '#ffd166', dur: 4 });
+    }
+    updPreVote(dt) {
+      const P = this.preVote; if (!P || this.busy) return;
+      P.t -= dt;
+      const B = this.D.board;
+      if (P.t <= 0 || U.dist(this.pl.x, this.pl.y, B.x, B.y + 40) < 70) { this.preVote = null; this.cfg.objective = null; R6.Audio.sfx('announce'); this.startVote(); }
+    }
     startVote() {
       const S = R6.State; const V = this.cfg.vote;
       const bots = S.aliveBots();
@@ -402,7 +429,8 @@
       R6.Engine.after(3.6, () => { this.vote = null; if (this.cfg.vote.after) this.cfg.vote.after(this, res); else this.done({ vote: res }); });
     }
     drawBoard(c) {
-      const B = this.D.board; if (!this.vote) return;
+      const B = this.D.board;
+      if (!this.vote) { R6.Props.board(c, B.x - 160, B.y - 150, 320, 110, [{ t: 'O 000   ×   X 000', s: 30, c: '#ffffff' }, { t: this.preVote ? 'VOTAÇÃO EM ' + Math.ceil(this.preVote.t) + 's' : 'VOTAÇÃO', s: 20, c: '#ffd166' }]); return; }
       const V = this.vote;
       R6.Props.board(c, B.x - 160, B.y - 150, 320, 110, [{ t: 'O ' + U.pad(V.O, 3) + '   ×   X ' + U.pad(V.X, 3), s: 30, c: '#ffffff' }, { t: V.last ? '#' + U.pad(V.last.p.num) + ' → ' + V.last.v : 'VOTAÇÃO', s: 20, c: V.last && V.last.v === 'O' ? '#3a86ff' : '#ff4d6d' }]);
       c.fillStyle = '#3a86ff'; c.beginPath(); c.arc(B.x - 40, B.y - 20, 16, 0, TAU); c.fill(); c.fillStyle = '#ff3b5c'; c.beginPath(); c.arc(B.x + 40, B.y - 20, 16, 0, TAU); c.fill();
@@ -496,7 +524,7 @@
       // HUD
       if (!this.runner) {
         const obj = this.leaving ? 'Siga os outros até a SAÍDA (escadas ao norte).' : this.vote ? 'Votação em andamento…' : this.riot ? 'SOBREVIVA! E/J empurrar · I bloquear · fique perto dos aliados' : this.tasks.filter(t => !t.done && !t.optional).map(t => t.text)[0] || this.cfg.objective || 'Explore o dormitório. Converse. Forme alianças. (TAB: relações)';
-        R6.HUD.draw(ctx, { game: this.cfg.title || (this.night ? 'DORMITÓRIO · NOITE' : 'DORMITÓRIO'), objective: obj, hp: this.riot ? this.hp : undefined, status: this.riot ? (this.hp > 50 ? 'OK' : 'FERIDO') : undefined, timer: this.riot ? Math.max(0, this.riot.dur - this.riot.t) : null, danger: !!this.riot });
+        R6.HUD.draw(ctx, { game: this.cfg.title || (this.night ? 'DORMITÓRIO · NOITE' : 'DORMITÓRIO'), objective: obj, hp: this.riot ? this.hp : undefined, status: this.riot ? (this.hp > 50 ? 'OK' : 'FERIDO') : undefined, timer: this.riot ? Math.max(0, this.riot.dur - this.riot.t) : this.preVote ? Math.max(0, this.preVote.t) : null, danger: !!this.riot });
         if (this.tasks.length && !this.leaving && !this.vote && !this.riot) {
           R6.UI.panel(ctx, 16, 96, 300, 20 + this.tasks.length * 22, { fill: 'rgba(6,8,12,.7)', shadow: false });
           this.tasks.forEach((tk, i) => R6.UI.text(ctx, (tk.done ? '✓ ' : '○ ') + tk.text, 28, 118 + i * 22, { size: 14, weight: 700, color: tk.done ? '#2ec4b6' : tk.optional ? '#999' : '#eee', maxW: 280 }));

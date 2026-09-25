@@ -274,7 +274,7 @@
       for (const p of pool) if (p.key && fate[p.key] === 'out' && p.alive) R6.Elim.kill(p, { cause: 'marbles', silent: true, noCard: p.key !== 'worker' && p.key !== 'girl' });
       for (let i = 0; i < nonKey.length; i += 2) { const a = nonKey[i], b = nonKey[i + 1]; if (!b) break; const loser = Math.random() < 0.5 ? a : b; R6.Elim.kill(loser, { cause: 'marbles', silent: true }); }
     }
-    debugWin() { this.stage = 'play'; this.phase = 'play'; this.om = 0; this.pm = 20; if (this.campaign) { this.opp && this.opp.alive && R6.Elim.kill(this.opp, { silent: true, noCard: true }); this.resolveOthers(); } this.win({ wait: 0.3 }); }
+    debugWin() { if (!this.opp && this.partners) { const c = this.partners.find(c => c.accept) || this.partners[0]; if (c) { this.setOpponent(c.p); R6.State.decide('marbles_partner', c.p.key || c.p.num, c.p.name); } } this.stage = 'play'; this.phase = 'play'; this.om = 0; this.pm = 20; if (this.campaign && this.opp) { this.opp && this.opp.alive && R6.Elim.kill(this.opp, { silent: true, noCard: true }); this.resolveOthers(); } this.win({ wait: 0.3 }); }
     focus() { const s = this.cam.toScreen(560, 560); return { x: s.x, y: s.y, look: this.pl, scale: 1.8 * this.cam.zoom, facing: 1 }; }
     // ------------------------------------------------ update
     update(dt) {

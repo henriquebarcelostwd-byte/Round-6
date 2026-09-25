@@ -16,6 +16,7 @@
       const look = R6.State.s ? R6.State.s.player.look : R6.Char.makeLook({ num: 456 });
       const eq = R6.Save.meta.equipped.outfit; const oc = R6.SHOP_OUTFITS && R6.SHOP_OUTFITS[eq];
       const plook = Object.assign({}, look, oc ? { outfitColors: oc } : {});
+      const sn = R6.VictoryFX && R6.VictoryFX.number(); if (sn) plook.num = sn;
       this.pl = this.world.add(new R6.Actor({ look: plook, x: this.W / 2, y: this.H / 2 + 60, isPlayer: true, speed: 100, runSpeed: 170, id: 'player' }));
       this.bots = [];
       for (let i = 0; i < (cfg.bots || 24); i++) {
@@ -36,7 +37,7 @@
       this.t += dt; this.stateT += dt; this.world.update(dt);
       if (this.updateResult(dt)) { this.cam.update(dt); return; }
       if (this.updateRules(dt)) { this.cam.update(dt); return; }
-      if (!this.pl.dead) { const ax = R6.Input.axis(); this.pl.steer(ax.x, ax.y, R6.Input.act('run')); }
+      if (!this.pl.dead) { const ax = R6.Input.axis(); this.pl.steer(ax.x, ax.y, R6.Input.act('run')); if (R6.VictoryFX) R6.VictoryFX.trail(this.world.fx, this.pl.x, this.pl.y, !!(ax.x || ax.y), dt); }
       this.tick(dt);
       this.cam.follow(this.pl.x, this.pl.y, this.cfg.zoom || 0.85); this.cam.update(dt);
     }

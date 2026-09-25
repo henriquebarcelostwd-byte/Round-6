@@ -74,7 +74,7 @@
     focus() { const s = this.cam.toScreen(this.me.x, this.me.y); return { x: s.x, y: s.y, look: this.me.look, scale: 1.15 * this.cam.zoom, facing: 1 }; }
     stepX(i) { return X0 + i * STEP + STEP / 2; }
     rowY(r) { return r === 'far' ? YF : YN; }
-    leader() { return this.queue.find(a => !a.done && !a.dead); }
+    leader() { return (this.queue || []).find(a => !a.done && !a.dead); }
     occupied(i, except) { return this.queue.some(a => a !== except && !a.dead && !a.done && a.pos === i); }
     // ------------------------------------------------ update
     update(dt) {
@@ -276,6 +276,7 @@
     // ------------------------------------------------ render
     render(ctx) {
       const cam = this.cam, t = this.t;
+      if (this.stage === 'vest' || !this.queue) { ctx.fillStyle = '#05060a'; ctx.fillRect(0, 0, R6.W, R6.H); return this.drawVest(ctx); }
       const g = ctx.createLinearGradient(0, 0, 0, R6.H); g.addColorStop(0, '#05060a'); g.addColorStop(1, '#0e1320'); ctx.fillStyle = g; ctx.fillRect(0, 0, R6.W, R6.H);
       cam.begin(ctx);
       const endX = X0 + this.N * STEP;

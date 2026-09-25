@@ -122,7 +122,9 @@
   const Campaign = {
     CH,
     idx: 0,
+    active: false,
     start(profile) {
+      Campaign.active = true;
       S().newGame(profile); R6.Elim.reset();
       Campaign.run(0);
     },
@@ -130,7 +132,7 @@
       // skip chapters whose condition is false
       while (i < CH.length && CH[i].when && !CH[i].when()) i++;
       if (i >= CH.length) { go(R6.MenuScene(), 'fade'); return; }
-      Campaign.idx = i; S().s.chapter = i;
+      Campaign.idx = i; S().s.chapter = i; Campaign.active = true;
       const ch = CH[i];
       S().checkpoint(ch.id);
       R6.Elim.reset();
@@ -144,6 +146,7 @@
     },
     retry() {
       if (!S().reloadCheckpoint()) { go(R6.MenuScene(), 'fade'); return; }
+      Campaign.active = true;
       R6.Elim.reset();
       const i = S().s.chapter || 0;
       Campaign.idx = i;
@@ -151,14 +154,14 @@
     },
     continueSave() {
       const d = R6.Save.readCampaign(); if (!d) return false;
-      S().restore(d.state); R6.Elim.reset(); S().lastCheckpoint = d;
+      S().restore(d.state); R6.Elim.reset(); S().lastCheckpoint = d; Campaign.active = true;
       const i = d.state.chapter || 0; Campaign.idx = i;
       try { CH[i].run(r => Campaign.next(r)); } catch (e) { R6.Engine.reportError(e); }
       return true;
     },
     // start a campaign directly at a season (season select) with plausible prior history
     startSeason(n, profile) {
-      S().newGame(profile);
+      S().newGame(profile); Campaign.active = true;
       const st = S();
       if (n >= 2) {
         st.s.flags.s1_winner = true; st.s.player.gamesWon = 6; st.s.player.money = 45.6e9;

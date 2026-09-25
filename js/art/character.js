@@ -231,7 +231,12 @@
     if (look.outfit === 'guard' || look.outfit === 'frontman' || look.vip) return;
     ctx.fillStyle = col;
     if (view === 'front') {
-      if (hs === 'long') { ctx.beginPath(); ctx.moveTo(-r * 1.08, -r * 0.2); ctx.quadraticCurveTo(-r * 1.3, r * 1.6, -r * 0.8, r * 2.2); ctx.lineTo(r * 0.8, r * 2.2); ctx.quadraticCurveTo(r * 1.3, r * 1.6, r * 1.08, -r * 0.2); ctx.closePath(); ctx.fill(); }
+      if (hs === 'long') {
+        // shadowed hair behind the neck, then two strands falling over the shoulders (reads as long hair, not a beard)
+        ctx.fillStyle = U.shade(col, -0.35); ctx.fillRect(-r * 0.62, r * 0.4, r * 1.24, r * 1.0);
+        ctx.fillStyle = col;
+        for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sx * r * 1.08, -r * 0.2); ctx.quadraticCurveTo(sx * r * 1.32, r * 1.6, sx * r * 0.86, r * 2.2); ctx.lineTo(sx * r * 0.42, r * 2.0); ctx.quadraticCurveTo(sx * r * 0.78, r * 1.1, sx * r * 0.62, 0); ctx.closePath(); ctx.fill(); }
+      }
       else if (hs === 'bob') { ctx.beginPath(); ctx.moveTo(-r * 1.12, -r * 0.3); ctx.quadraticCurveTo(-r * 1.25, r * 0.9, -r * 0.95, r * 1.05); ctx.lineTo(r * 0.95, r * 1.05); ctx.quadraticCurveTo(r * 1.25, r * 0.9, r * 1.12, -r * 0.3); ctx.closePath(); ctx.fill(); }
       else if (hs === 'twin') { circ(ctx, -r * 1.25, r * 0.1, r * 0.5, col); circ(ctx, r * 1.25, r * 0.1, r * 0.5, col); }
       else if (hs === 'pony') { ell(ctx, r * 0.9, r * 0.2, r * 0.25, r * 0.7, col, -0.3); }

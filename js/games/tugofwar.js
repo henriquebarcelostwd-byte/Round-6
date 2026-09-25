@@ -79,7 +79,9 @@
         const inTeam = new Set(this.team.map(p => p.id));
         opp = U.shuffle(S.aliveBots().filter(p => !p.key && !inTeam.has(p.id))).sort((a, b) => b.tr.str - a.tr.str).slice(0, 25);
         opp = U.shuffle(opp).slice(0, 10);
-      } else opp = Array.from({ length: 10 }, (_, i) => ({ num: 300 + i * 7, look: R6.Char.makeLook({ num: 300 + i * 7, fem: false, build: U.rand(1.05, 1.2) }), tr: { str: U.rand(0.55, 0.95) }, fake: true }));
+      } else opp = [];
+      // pad with anonymous opponents if the roster ran short
+      for (let i = opp.length; i < 10; i++) opp.push({ num: 300 + i * 7, look: R6.Char.makeLook({ num: 300 + i * 7, fem: false, build: U.rand(1.05, 1.2) }), tr: { str: U.rand(0.55, 0.95) }, fake: true });
       this.R = opp.map((p, i) => ({ p, look: p.look, str: U.clamp(p.tr.str * 0.85 + (p.look.build - 0.9) * 0.9 + 0.08 + lvlBoost, 0.2, 1.15) * R6.Save.D(1, 1.08, 1.16), x: 1700 + i * 68, baseX: 1700 + i * 68, t: Math.random() * 3, fall: null, anim: 'pull' }));
       this.sumL = this.L.reduce((a, m) => a + m.str, 0); this.sumR = this.R.reduce((a, m) => a + m.str, 0);
       this.advice = this.team.find(p => p.key === 'oldman') ? 'oldman' : null;

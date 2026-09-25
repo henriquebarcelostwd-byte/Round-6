@@ -139,15 +139,19 @@
       let best = false;
       if (score != null && game.scoreId) best = R6.Save.best(game.scoreId, score, game.higherBetter !== false);
       const scene = {
-        name: 'results', t: 0, pausable: false,
+        name: 'results', t: 0, pausable: false, fx: new R6.Particles(400),
+        look: (() => { const l = Object.assign({}, R6.State.s ? R6.State.s.player.look : R6.Char.makeLook({ num: 456 })); if (game.mode === 'extra') { const oc = R6.SHOP_OUTFITS && R6.SHOP_OUTFITS[R6.Save.meta.equipped.outfit]; if (oc) l.outfitColors = oc; const n = R6.VictoryFX && R6.VictoryFX.number(); if (n) l.num = n; } return l; })(),
         menu: new R6.UI.Menu([
           { label: 'JOGAR NOVAMENTE', icon: 'circle', action: () => { const def = (game.extraId && R6.EXTRAS && R6.EXTRAS.find(e => e.id === game.extraId)) || R6.Games[game.gameId]; if (def) R6.Engine.go(def.create(Object.assign({}, game.opts)), { t: 'fade' }); } },
           { label: 'VOLTAR', icon: 'square', action: () => R6.Engine.go(game.mode === 'extra' ? R6.ExtrasScene() : R6.GameSelectScene(), { t: 'fade' }) },
         ]),
         enter() { R6.Music.play(won ? 'victory' : 'sad'); },
-        update(dt) { this.t += dt; this.menu.update(dt); },
+        update(dt) { this.t += dt; this.fx.update(dt); if (won && R6.VictoryFX) R6.VictoryFX.emit(this.fx, dt); this.menu.update(dt); },
         render(ctx) {
           ctx.fillStyle = '#07080b'; ctx.fillRect(0, 0, R6.W, R6.H);
+          this.fx.draw(ctx);
+          const an = won ? (R6.VictoryFX ? R6.VictoryFX.anim() : 'celebrate') : 'sitSad';
+          R6.Char.draw(ctx, this.look, 1040, 600, { view: an === 'bow' || an === 'spin' ? 'side' : 'front', anim: an, t: this.t, scale: 2.4, alpha: Math.min(1, this.t * 2) });
           R6.UI.text(ctx, won ? 'VITÓRIA' : 'ELIMINADO', R6.W / 2, 170, { size: 96, fam: 'title', align: 'center', color: won ? '#2ec4b6' : '#ff3b5c', spacing: 8 });
           R6.UI.text(ctx, game.title || '', R6.W / 2, 220, { size: 20, align: 'center', color: '#bbb', spacing: 3 });
           if (score != null) R6.UI.text(ctx, (game.scoreLabel || 'PONTOS') + ': ' + score + (best ? '   ★ NOVO RECORDE' : ''), R6.W / 2, 290, { size: 30, align: 'center', color: '#f2c14e', fam: 'mono' });

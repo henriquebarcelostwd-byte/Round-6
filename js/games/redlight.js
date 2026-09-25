@@ -357,7 +357,7 @@
       this.win({ sub: 'PLAYERS REMAINING: ' + (R6.State.s ? R6.State.alive : '') });
     }
     summary() { return { saved: R6.State.s ? R6.State.s.stats.saved : 0 }; }
-    debugWin() { this.phase = 'play'; this.intro = 0; this.playerFinished = true; this.pl.y = FINISH - 40; this.timeLeft = 0.01; }
+    debugWin() { this.phase = 'play'; this.intro = 0; this.playerFinished = true; this.pl.y = FINISH - 40; for (const a of this.world.actors) if (a.ai && !a.dead && (a.ai.key || Math.random() < 0.55)) { a.ai.finished = true; a.y = FINISH - U.rand(30, 250); } this.timeLeft = 0.01; }
     // --------------- render ---------------
     render(ctx) {
       const cam = this.cam, t = this.t;
