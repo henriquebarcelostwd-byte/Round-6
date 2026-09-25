@@ -7,10 +7,10 @@
   // wall palettes (top, face, faceDark, line)
   const WSTYLE = [
     { top: '#c9c4b8', face: '#8f8b82', faceD: '#6f6b64', line: '#a8a399' },       // 0 concrete
-    { top: '#f4b6c8', face: '#d9849c', faceD: '#bb6a80', line: '#e59bb0' },       // 1 pastel pink
-    { top: '#a9d8e8', face: '#6fb0c8', faceD: '#5595ad', line: '#8cc6da' },       // 2 pastel blue
-    { top: '#f7df8e', face: '#d7b75a', faceD: '#b89a45', line: '#e8cc74' },       // 3 pastel yellow
-    { top: '#b8e0b0', face: '#7fb876', faceD: '#679c5f', line: '#9ccd93' },       // 4 pastel green
+    { top: '#e889a4', face: '#c45f7c', faceD: '#9e4862', line: '#d9728f' },       // 1 pastel pink
+    { top: '#7fbcd6', face: '#4f8fad', faceD: '#3d7390', line: '#68a8c4' },       // 2 pastel blue
+    { top: '#ecc85e', face: '#c4a03e', faceD: '#9e8030', line: '#dbb44e' },       // 3 pastel yellow
+    { top: '#8fc486', face: '#5f9a56', faceD: '#4a7d43', line: '#78b06f' },       // 4 pastel green
     { top: '#3a3d45', face: '#23252b', faceD: '#18191d', line: '#2e3037' },       // 5 industrial dark
     { top: '#e8e6e0', face: '#b9b6ae', faceD: '#9b988f', line: '#d0cdc5' },       // 6 white tile (dorm)
     { top: '#6f5e4c', face: '#4e4135', faceD: '#3a3028', line: '#5e5042' },       // 7 wood/brown
