@@ -128,7 +128,7 @@
       const sea = { dawn: 0.1 };
       const a = R6.cutscene({
         id: 'end_dark', stage: 'sea', music: 'dread', stageProps: sea, cam: [900, 380, 1.1],
-        actors: [{ id: 'p', look: L().me(), x: 900, dir: 1, anim: 'sit' }],
+        actors: [{ id: 'p', look: L().me(), x: 900, dir: 1, anim: 'sit' }], seats: [{ x: 925, w: 300, top: 48 }],
         drawWorld: (c, sc) => { const g = sc.stage.ground; c.fillStyle = '#e8e4d8'; c.beginPath(); c.moveTo(700, g - 60); c.lineTo(1150, g - 60); c.lineTo(1100, g - 10); c.lineTo(740, g - 10); c.closePath(); c.fill(); },
         onUpdate: (sc, dt) => { sea.dawn = Math.min(0.8, sea.dawn + dt * 0.03); },
         steps: [

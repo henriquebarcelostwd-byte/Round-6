@@ -243,7 +243,7 @@
         ctx.restore();
         if (this.mode === 'title') {
           const a = 0.5 + Math.sin(t * 3) * 0.5;
-          if (t > 1) R6.UI.text(ctx, 'PRESSIONE QUALQUER TECLA', 640, 520, { size: 22, align: 'center', color: '#fff', alpha: a * Math.min(1, t - 1), spacing: 6, weight: 700, shadow: true });
+          if (t > 1) R6.UI.text(ctx, R6.Touch && R6.Touch.isTouch ? 'TOQUE PARA COMEÇAR' : 'PRESSIONE QUALQUER TECLA', 640, 520, { size: 22, align: 'center', color: '#fff', alpha: a * Math.min(1, t - 1), spacing: 6, weight: 700, shadow: true });
           R6.UI.text(ctx, '456 PARTICIPANTES · 1 VENCEDOR · ₩45.600.000.000', 640, 470, { size: 16, align: 'center', color: '#e8c46a', alpha: intro * 0.9, spacing: 3, weight: 700 });
           R6.UI.text(ctx, 'Obra de fã, inspirada em Round 6 / Squid Game. Sem afiliação oficial.', 640, 690, { size: 12, align: 'center', color: '#666' });
           return;

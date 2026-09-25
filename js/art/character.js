@@ -60,7 +60,7 @@
   function base(p) {
     p.bob = 0; p.lean = 0; p.head = 0; p.lHip = 0; p.lKnee = 0; p.rHip = 0; p.rKnee = 0;
     p.lSh = 0.06; p.lEl = 0.12; p.rSh = -0.06; p.rEl = 0.12; p.rot = 0; p.dx = 0; p.dy = 0;
-    p.shake = 0; p.expr = null; p.mouth = 0; p.eyes = null; p.crouch = 0; p.armOut = 0; p.lying = 0; p.item = null; p.handsFace = 0;
+    p.shake = 0; p.expr = null; p.mouth = 0; p.eyes = null; p.crouch = 0; p.armOut = 0; p.lying = 0; p.item = null; p.handsFace = 0; p.sit = 0;
     return p;
   }
   const scratch = base({});
@@ -151,6 +151,10 @@
     eat(p, t) { const k = (Math.sin(t * 3) + 1) / 2; p.rSh = 1.2 + k * 0.9; p.rEl = 1.8 + k * 0.7; p.lSh = 0.7; p.lEl = 1.4; p.head = 0.1; p.mouth = k > 0.8 ? 0.6 : 0; p.item = 'food'; p.sit = 1; },
     sit(p, t) { p.rHip = 1.5; p.lHip = 1.45; p.rKnee = 1.5; p.lKnee = 1.45; p.bob = 18; p.rSh = 0.5; p.lSh = 0.45; p.rEl = 0.9; p.lEl = 0.9; p.sit = 1; p.bob += Math.sin(t * 2) * 0.4; },
     sitSad(p, t) { ANIMS.sit(p, t); p.head = 0.4; p.lean = 0.3; p.rSh = 1.2; p.rEl = 1.6; p.lSh = 1.1; p.lEl = 1.7; p.expr = 'sad'; },
+    // sitting on the floor: legs stretched forward, hands resting behind
+    sitFloor(p, t) { p.rHip = 1.45; p.lHip = 1.4; p.rKnee = 0.12; p.lKnee = 0.2; p.bob = 37 + Math.sin(t * 2) * 0.3; p.lean = -0.18; p.rSh = -0.55; p.lSh = -0.5; p.rEl = 0.1; p.lEl = 0.1; p.sit = 1; },
+    // sitting on the floor hugging the knees
+    hugKnees(p, t) { p.rHip = 2.2; p.lHip = 2.15; p.rKnee = 2.4; p.lKnee = 2.35; p.bob = 37 + Math.sin(t * 1.6) * 0.4; p.lean = 0.3; p.head = 0.35; p.rSh = 0.8; p.lSh = 0.72; p.rEl = 0.45; p.lEl = 0.5; p.expr = 'sad'; p.sit = 1; },
     sleep(p, t) { p.rot = -Math.PI / 2; p.lying = 1; p.eyes = 'closed'; p.expr = 'sleep'; p.bob = Math.sin(t * 1.3) * 0.5; p.rSh = 0.2; p.lSh = 0.1; p.rKnee = 0.3; p.rHip = 0.2; },
     lie(p, t, o) { p.rot = (o.back ? -1 : 1) * Math.PI / 2; p.lying = 1; p.eyes = 'closed'; p.expr = 'dead'; p.rSh = 0.9; p.lSh = 0.4; p.rHip = 0.3; p.rKnee = 0.5; },
     getup(p, t) { const k = 1 - U.ease.inOutCubic(U.clamp(t / 0.8, 0, 1)); p.rot = -Math.PI / 2 * k; p.lying = k; p.rKnee = 1.2 * k; p.lKnee = 1.0 * k; p.rHip = 0.9 * k; p.rSh = 1.3 * k; p.lSh = 1.0 * k; },
@@ -645,6 +649,9 @@
     if (o.expr && (anim === 'talk' || anim === 'idle' || anim === 'walk' || anim === 'look' || anim === 'sit' || anim === 'point' || anim === 'hold')) pose.expr = o.expr;
     if (o.mouth != null) pose.mouth = Math.max(pose.mouth, o.mouth);
     if (o.item) pose.item = o.item;
+    // keep the legs seated while the upper body plays another animation (talking, holding, crying on a chair)
+    if (o.seated === 'chair' && !pose.lying && !pose.rot) { pose.rHip = 1.5; pose.lHip = 1.45; pose.rKnee = 1.5; pose.lKnee = 1.45; pose.bob = 18 + (anim === 'sit' || anim === 'sitSad' ? pose.bob - 18 : pose.bob * 0.3); pose.sit = 1; pose.lean = Math.max(-0.1, Math.min(pose.lean || 0, 0.4)); }
+    else if (o.seated === 'floor' && !pose.lying && !pose.rot && anim !== 'hugKnees' && anim !== 'sitFloor') { pose.rHip = 1.45; pose.lHip = 1.4; pose.rKnee = 0.12; pose.lKnee = 0.2; pose.bob = 37; pose.sit = 1; }
     const eff = scale * (o.zoom || 1);
     const lb = R6.Engine ? R6.Engine.lodBias : 0;
     const lod = o.lod != null ? o.lod : eff < 0.32 + lb ? 0 : eff < 0.75 ? 1 : 2;

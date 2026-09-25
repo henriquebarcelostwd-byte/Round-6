@@ -8,7 +8,10 @@ cinematográficas que mantêm o mesmo personagem.
 
 ## Como jogar
 
-Abra `index.html` num navegador moderno (Chrome, Edge, Firefox). Se o navegador bloquear arquivos locais, sirva a pasta:
+**Arquivo único:** baixe `dist/round6.html` e abra no navegador — o jogo inteiro está dentro dele (funciona em computador e celular;
+no celular, deixe o aparelho na horizontal: aparecem joystick e botões na tela). Para regerar: `node tools/bundle.js`.
+
+Ou abra `index.html` junto com as pastas `js/` e `css/` num navegador moderno (Chrome, Edge, Firefox). Se o navegador bloquear arquivos locais, sirva a pasta:
 
 ```bash
 python3 -m http.server 8000   # depois abra http://localhost:8000
@@ -30,6 +33,7 @@ python3 -m http.server 8000   # depois abra http://localhost:8000
 | 5–8 | emotes no dormitório (compráveis na loja) |
 | ESC / P | pausa (nas cutscenes: **segure ESC** para pular, **P** pausa) |
 | F3 | contador de FPS |
+| Toque | joystick à esquerda, botões ESPAÇO/E/SHIFT/Q à direita, II pausa, ESC pular/voltar |
 
 ## Conteúdo
 

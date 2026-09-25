@@ -99,16 +99,27 @@
       });
       canvas.addEventListener('contextmenu', e => e.preventDefault());
       canvas.addEventListener('wheel', e => { mouse.wheel += Math.sign(e.deltaY); e.preventDefault(); }, { passive: false });
-      // touch → mouse emulation + virtual stick on left half when a scene enables it
+      // touch: on-screen controls (R6.Touch) take their touches; any other touch acts as the mouse
+      let mouseTouch = null;
       canvas.addEventListener('touchstart', e => {
-        R6.Audio && R6.Audio.unlock();
-        const t = e.changedTouches[0];
-        setPos(t.clientX, t.clientY);
-        mouse.down = true; mouse.pressed = true; Input.lastDevice = 'touch';
-        e.preventDefault();
+        R6.Audio && R6.Audio.unlock(); Input.lastDevice = 'touch'; e.preventDefault(); canvas.focus();
+        for (const t of e.changedTouches) {
+          const p = toLogical(t.clientX, t.clientY);
+          if (R6.Touch && R6.Touch.start(t, p)) continue;
+          if (mouseTouch != null) continue;
+          mouseTouch = t.identifier; setPos(t.clientX, t.clientY); mouse.down = true; mouse.pressed = true;
+        }
       }, { passive: false });
-      canvas.addEventListener('touchmove', e => { const t = e.changedTouches[0]; setPos(t.clientX, t.clientY); e.preventDefault(); }, { passive: false });
-      canvas.addEventListener('touchend', e => { mouse.down = false; mouse.released = true; e.preventDefault(); }, { passive: false });
+      canvas.addEventListener('touchmove', e => {
+        e.preventDefault();
+        for (const t of e.changedTouches) { const p = toLogical(t.clientX, t.clientY); if (R6.Touch && R6.Touch.move(t, p)) continue; if (t.identifier === mouseTouch) setPos(t.clientX, t.clientY); }
+      }, { passive: false });
+      const tend = e => {
+        e.preventDefault();
+        for (const t of e.changedTouches) { if (R6.Touch && R6.Touch.end(t)) continue; if (t.identifier === mouseTouch) { mouse.down = false; mouse.released = true; mouseTouch = null; } }
+      };
+      canvas.addEventListener('touchend', tend, { passive: false });
+      canvas.addEventListener('touchcancel', tend, { passive: false });
     },
     // for automated tests
     simKey(code, down) {

@@ -118,7 +118,7 @@
         { label: 'DIFICULDADE', sub: () => '◀ ' + DIFF_PT[S.difficulty] + ' ▶', onLeft: () => { S.difficulty = cyc(DIFF, S.difficulty, -1); save(); }, onRight: () => { S.difficulty = cyc(DIFF, S.difficulty, 1); save(); }, action: () => { S.difficulty = cyc(DIFF, S.difficulty, 1); save(); } },
         { label: 'VELOCIDADE DO TEXTO', sub: () => '◀ ' + SPD_PT[Math.max(0, SPD.indexOf(S.textSpeed))] + ' ▶', onLeft: () => { S.textSpeed = cyc(SPD, SPD.includes(S.textSpeed) ? S.textSpeed : 1, -1); save(); }, onRight: () => { S.textSpeed = cyc(SPD, SPD.includes(S.textSpeed) ? S.textSpeed : 1, 1); save(); }, action: () => { S.textSpeed = cyc(SPD, SPD.includes(S.textSpeed) ? S.textSpeed : 1, 1); save(); } },
         tog('shake', 'TREMOR DE TELA'), tog('hints', 'DICAS DE CONTROLE NA TELA'),
-        { label: 'TELA CHEIA', sub: () => document.fullscreenElement ? 'SIM' : 'NÃO', action: () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); } catch (e) { } } },
+        { label: 'TELA CHEIA', sub: () => document.fullscreenElement ? 'SIM' : 'NÃO', action: () => { try { const r = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); if (r && r.catch) r.catch(() => R6.Toast.show('Tela cheia indisponível aqui.', { color: '#ff5a6a' })); } catch (e) { } } },
         { label: 'MOSTRAR FPS', sub: () => R6.Engine.showFps ? 'SIM' : 'NÃO', action: () => { R6.Engine.showFps = !R6.Engine.showFps; } },
       ];
       if (o.reset) items.push({ label: 'APAGAR TODO O PROGRESSO', color: '#ff3b5c', action: () => o.reset() });
@@ -168,6 +168,9 @@
       if (Pause.confirm) {
         const I = R6.Input; const c = Pause.confirm;
         if (I.actP('left') || I.actP('right') || I.actP('up') || I.actP('down')) { c.i = c.i ? 0 : 1; R6.Audio.sfx('hover'); }
+        const m = I.mouse;
+        if (m.pressed && U.rectHit(m.x, m.y, { x: 400, y: 386, w: 220, h: 44 })) { Pause.confirm = null; R6.Audio.sfx('back'); return; }
+        if (m.pressed && U.rectHit(m.x, m.y, { x: 660, y: 386, w: 220, h: 44 })) { R6.Audio.sfx('confirm'); Pause.confirm = null; c.yes(); return; }
         if (I.actP('confirm')) { R6.Audio.sfx('confirm'); Pause.confirm = null; if (c.i) c.yes(); }
         else if (I.actP('back')) { Pause.confirm = null; R6.Audio.sfx('back'); }
         return;
@@ -271,8 +274,8 @@
         if (I.pressed('KeyE') || I.pressed('PageDown') || I.actP('tab')) { tab = tab === 3 ? 1 : tab + 1; i = 0; R6.Audio.sfx('hover'); }
         if (I.actP('left')) { i = Math.max(0, i - 1); R6.Audio.sfx('hover'); } if (I.actP('right')) { i = Math.min(L.length - 1, i + 1); R6.Audio.sfx('hover'); }
         if (I.actP('up')) { if (i - cols >= 0) i -= cols; R6.Audio.sfx('hover'); } if (I.actP('down')) { if (i + cols < L.length) i += cols; R6.Audio.sfx('hover'); }
-        if (I.pressed('KeyZ')) { const D = ['normal', 'hard', 'extreme']; const S = R6.Save.settings; S.difficulty = D[(D.indexOf(S.difficulty) + 1) % 3]; R6.Save.saveSettings(); R6.Audio.sfx('tick'); }
         const m = I.mouse;
+        if (I.pressed('KeyZ') || (m.pressed && U.rectHit(m.x, m.y, { x: 900, y: 136, w: 330, h: 34 }))) { const D = ['normal', 'hard', 'extreme']; const S = R6.Save.settings; S.difficulty = D[(D.indexOf(S.difficulty) + 1) % 3]; R6.Save.saveSettings(); R6.Audio.sfx('tick'); }
         for (let t = 1; t <= 3; t++) { const r = { x: 60 + (t - 1) * 170, y: 134, w: 160, h: 34 }; if (m.pressed && U.rectHit(m.x, m.y, r)) { tab = t; i = 0; R6.Audio.sfx('hover'); } }
         L.forEach((id, k) => { const r = { x: 60 + (k % cols) * 292, y: 186 + Math.floor(k / cols) * 150, w: 276, h: 136 }; if ((m.moved || m.pressed) && U.rectHit(m.x, m.y, r)) { if (i !== k) { i = k; R6.Audio.sfx('hover'); } if (m.pressed) play(); } });
         if (I.actP('confirm')) play();
@@ -280,7 +283,7 @@
       hints: [['←→↑↓', 'jogo'], ['Q/E', 'temporada'], ['Z', 'dificuldade'], ['ENTER', 'jogar'], ['ESC', 'voltar']],
       render(ctx, sc) {
         for (let t = 1; t <= 3; t++) R6.UI.button(ctx, 60 + (t - 1) * 170, 134, 160, 34, 'TEMPORADA ' + t, { hover: t === tab, size: 16 });
-        R6.UI.text(ctx, 'DIFICULDADE: ' + ({ normal: 'NORMAL', hard: 'DIFÍCIL', extreme: 'EXTREMO' })[R6.Save.diff()] + '  (Z)', 1220, 160, { size: 15, align: 'right', color: '#f2c14e', weight: 800 });
+        R6.UI.text(ctx, 'DIFICULDADE: ' + ({ normal: 'NORMAL', hard: 'DIFÍCIL', extreme: 'EXTREMO' })[R6.Save.diff()] + (R6.Input.lastDevice === 'touch' ? '  (tocar)' : '  (Z)'), 1220, 160, { size: 15, align: 'right', color: '#f2c14e', weight: 800 });
         list().forEach((id, k) => {
           const g = R6.Games[id], x = 60 + (k % 4) * 292, y = 186 + Math.floor(k / 4) * 150, hov = k === i, un = unlocked(id);
           R6.UI.panel(ctx, x, y, 276, 136, { fill: hov ? 'rgba(18,20,28,.96)' : 'rgba(8,10,14,.86)', stroke: hov ? R6.UI.T.accent : undefined, lw: hov ? 2 : 1 });
@@ -306,7 +309,7 @@
         const I = R6.Input, n = L().length;
         if (I.actP('up')) { i = (i + n - 1) % n; R6.Audio.sfx('hover'); } if (I.actP('down')) { i = (i + 1) % n; R6.Audio.sfx('hover'); }
         if (I.actP('left') || I.actP('right')) { const off = L().filter(e => e.official).length; i = i < off ? Math.min(n - 1, off + (i % Math.max(1, n - off))) : Math.min(off - 1, i - off); R6.Audio.sfx('hover'); }
-        if (I.pressed('KeyL')) { go(R6.ShopScene(() => go(R6.ExtrasScene()))); return 'stop'; }
+        if (I.pressed('KeyL') || (I.mouse.pressed && U.rectHit(I.mouse.x, I.mouse.y, { x: 960, y: 670, w: 280, h: 30 }))) { go(R6.ShopScene(() => go(R6.ExtrasScene()))); return 'stop'; }
         const m = I.mouse;
         L().forEach((e, k) => { const r = rect(k); if ((m.moved || m.pressed) && U.rectHit(m.x, m.y, r)) { if (i !== k) { i = k; R6.Audio.sfx('hover'); } if (m.pressed) play(); } });
         if (I.actP('confirm')) play();
@@ -446,6 +449,12 @@
         else if (tab === 0 && (I.actP('left') || I.actP('right'))) { const c = 2; i = U.clamp(i + (I.actP('left') ? -9 : 9), 0, chars.length - 1); void c; R6.Audio.sfx('hover'); }
         if (I.actP('up')) { i = Math.max(0, i - 1); R6.Audio.sfx('hover'); } if (I.actP('down')) { i = Math.min(count() - 1, i + 1); R6.Audio.sfx('hover'); }
         const m = I.mouse; TABS.forEach((_, k) => { if (m.pressed && U.rectHit(m.x, m.y, { x: 60 + k * 190, y: 134, w: 180, h: 34 })) { tab = k; i = 0; R6.Audio.sfx('hover'); } });
+        // tap a row: select it; tap the selected row again: open/replay it
+        if (m.pressed && tab < 3) {
+          const n = count(), rowH = tab === 1 ? 64 : 42, top = tab === 1 ? 0 : Math.max(0, Math.min(i - 5, n - 11)), w = tab === 0 ? 380 : tab === 1 ? 1160 : 760;
+          const k = Math.floor((m.y - 186) / rowH);
+          if (m.x >= 60 && m.x <= 60 + w && k >= 0 && top + k < n) { const idx = top + k; if (idx === i && tab > 0) R6.Input.simTap('Enter'); else { i = idx; R6.Audio.sfx('hover'); } }
+        }
         if (I.actP('confirm')) {
           if (tab === 1) { const id = endIds[i]; if (R6.Save.meta.endings[id]) { R6.Audio.sfx('confirm'); replayEnding(id); } else R6.Audio.sfx('error'); }
           if (tab === 2) { const s = scenes()[i]; if (s) { const id = s[0]; if (id.startsWith('ending_')) replayEnding(id.slice(7)); else if (id === 'credits') go(R6.CreditsScene(() => go(R6.GalleryScene()))); else R6.Audio.sfx('error'); } }

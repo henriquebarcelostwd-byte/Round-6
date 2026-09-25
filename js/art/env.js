@@ -68,7 +68,7 @@
       ctx.fillStyle = '#e9c46a'; ctx.fillRect(0, g + 118, this.w, 10);
       ctx.fillStyle = 'rgba(0,0,0,.15)'; for (let x = 0; x < this.w; x += 60) ctx.fillRect(x, g + 8, 2, 110);
       // benches
-      for (let x = 250; x < this.w; x += 760) { ctx.fillStyle = '#8a5a3a'; ctx.fillRect(x, g - 50, 180, 12); ctx.fillStyle = '#555'; ctx.fillRect(x + 10, g - 38, 8, 38); ctx.fillRect(x + 162, g - 38, 8, 38); }
+      for (const b of this.seats) { const x = b.x - b.w / 2; ctx.fillStyle = '#555'; ctx.fillRect(x + 10, g - 70, 6, 40); ctx.fillRect(x + b.w - 16, g - 70, 6, 40); ctx.fillStyle = '#7a4e32'; ctx.fillRect(x, g - 72, b.w, 9); ctx.fillStyle = '#8a5a3a'; ctx.fillRect(x, g - 32, b.w, 10); ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(x, g - 32, b.w, 2); ctx.fillStyle = '#555'; ctx.fillRect(x + 10, g - 22, 8, 22); ctx.fillRect(x + b.w - 18, g - 22, 8, 22); }
     },
     front(ctx, cam, t) {
       const g = this.ground;
@@ -128,7 +128,7 @@
       ctx.fillStyle = '#2a2c31'; ctx.fillRect(0, 100, this.w, 90); ctx.fillRect(0, 340, this.w, 40);
       ctx.fillStyle = '#1e2024'; ctx.fillRect(0, 380, this.w, 300);
       ctx.strokeStyle = '#3a3d44'; ctx.lineWidth = 6; ctx.strokeRect(360, 190, 560, 150);
-      ctx.fillStyle = '#34363c'; for (let x = 120; x < this.w; x += 380) { ctx.fillRect(x, g - 120, 200, 30); ctx.fillRect(x + 160, g - 260, 40, 170); }
+      for (const b of this.seats) { const x = b.x - b.w / 2; ctx.fillStyle = '#2c2f35'; ctx.fillRect(x, g - 96, b.w, 60); ctx.fillStyle = '#3a3d44'; ctx.fillRect(x + 4, g - 92, b.w - 8, 6); ctx.fillStyle = '#3c3f46'; ctx.fillRect(x, g - 36, b.w, 12); ctx.fillStyle = '#26282d'; ctx.fillRect(x + 8, g - 24, b.w - 16, 24); }
     },
   };
 
@@ -150,7 +150,7 @@
       for (let x = 300; x < this.w; x += 700) {
         ctx.fillStyle = '#222'; ctx.fillRect(x, g - 300, 8, 300); ctx.fillStyle = '#fff6d0'; circ(ctx, x + 4, g - 305, 12, '#fff6d0');
         ctx.fillStyle = rg(ctx, x + 4, g - 300, 0, 300, [[0, 'rgba(255,240,190,.3)'], [1, 'rgba(255,240,190,0)']]); ctx.fillRect(x - 300, g - 600, 600, 700);
-        ctx.fillStyle = '#5b3d2a'; ctx.fillRect(x + 90, g - 45, 170, 10); ctx.fillStyle = '#333'; ctx.fillRect(x + 100, g - 35, 6, 35); ctx.fillRect(x + 244, g - 35, 6, 35);
+        ctx.fillStyle = '#333'; ctx.fillRect(x + 100, g - 64, 5, 32); ctx.fillRect(x + 245, g - 64, 5, 32); ctx.fillStyle = '#4a3222'; ctx.fillRect(x + 90, g - 66, 170, 8); ctx.fillStyle = '#5b3d2a'; ctx.fillRect(x + 90, g - 32, 170, 9); ctx.fillStyle = '#333'; ctx.fillRect(x + 100, g - 23, 6, 23); ctx.fillRect(x + 244, g - 23, 6, 23);
       }
       // tents / boxes of homeless
       for (let x = 900; x < this.w; x += 600) { ctx.fillStyle = '#3a4a5a'; ctx.beginPath(); ctx.moveTo(x, g); ctx.lineTo(x + 70, g - 80); ctx.lineTo(x + 140, g); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#a58b62'; ctx.fillRect(x + 160, g - 40, 60, 40); }
@@ -171,9 +171,13 @@
       ctx.fillStyle = '#2b2b2b'; ctx.beginPath(); ctx.moveTo(cx - 50, 170); ctx.lineTo(cx + 50, 170); ctx.lineTo(cx + 20, 140); ctx.lineTo(cx - 20, 140); ctx.closePath(); ctx.fill();
       circ(ctx, cx, 172, 10, `rgba(255,240,200,${fl})`);
       ctx.fillStyle = '#0f0f12'; ctx.fillRect(0, g, this.w, 200);
-      // table
-      ctx.fillStyle = '#3b2a20'; ctx.fillRect(cx - 170, g - 72, 340, 16); ctx.fillStyle = '#2a1d16'; ctx.fillRect(cx - 160, g - 56, 12, 56); ctx.fillRect(cx + 148, g - 56, 12, 56);
-      ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(cx - 170, g - 72, 340, 3);
+    },
+    // the table is drawn in front of the actors so whoever sits at it is partly hidden behind it
+    front(ctx, cam, t) {
+      if (this.noTable) return;
+      const g = this.ground, cx = 700;
+      ctx.fillStyle = '#3b2a20'; ctx.fillRect(cx - 170, g - 52, 340, 14); ctx.fillStyle = '#2a1d16'; ctx.fillRect(cx - 160, g - 38, 12, 38); ctx.fillRect(cx + 148, g - 38, 12, 38);
+      ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(cx - 170, g - 52, 340, 3);
     },
   };
 
@@ -218,7 +222,7 @@
       // golden statues / columns
       for (let x = 80; x < this.w; x += 1580) { ctx.fillStyle = grad(ctx, x, 0, x + 80, 0, [[0, '#8a6a2a'], [0.5, '#f2c14e'], [1, '#8a6a2a']]); ctx.fillRect(x, 40, 80, g - 40); }
       ctx.fillStyle = '#3a0d14'; ctx.fillRect(0, g, this.w, 200);
-      ctx.fillStyle = '#5a1420'; for (let x = 200; x < this.w; x += 420) { ctx.fillRect(x, g - 70, 260, 50); ctx.fillRect(x, g - 110, 30, 90); ctx.fillRect(x + 230, g - 110, 30, 90); }
+      for (const b of this.seats) { const x = b.x - b.w / 2; ctx.fillStyle = '#4a0f1a'; ctx.fillRect(x, g - 92, b.w, 58); ctx.fillStyle = '#5a1420'; ctx.fillRect(x, g - 36, b.w, 36); ctx.fillStyle = '#6e1a28'; ctx.fillRect(x + 22, g - 40, b.w - 44, 8); ctx.fillStyle = '#4a0f1a'; ctx.fillRect(x - 6, g - 60, 28, 60); ctx.fillRect(x + b.w - 22, g - 60, 28, 60); ctx.fillStyle = '#c9a13b'; ctx.fillRect(x, g - 94, b.w, 3); }
       // chandelier
       ctx.fillStyle = '#f2c14e'; for (let i = 0; i < 9; i++) circ(ctx, 900 + (i - 4) * 26, 50 + Math.abs(i - 4) * 6, 5, '#ffe9a8');
       ctx.fillStyle = rg(ctx, 900, 60, 0, 380, [[0, 'rgba(255,220,140,.25)'], [1, 'rgba(255,220,140,0)']]); ctx.fillRect(500, 0, 800, 500);
@@ -237,10 +241,14 @@
       ctx.fillStyle = rg(ctx, cx, 80, 0, 520, [[0, 'rgba(255,225,170,.35)'], [1, 'rgba(255,225,170,0)']]); ctx.fillRect(0, 0, this.w, g + 100);
       for (let i = 0; i < 13; i++) circ(ctx, cx + (i - 6) * 22, 70 + Math.abs(i - 6) * 5, 4.5, '#fff1c4');
       ctx.fillStyle = '#0d0b10'; ctx.fillRect(0, g, this.w, 200);
-      // long table with white cloth
-      ctx.fillStyle = '#f2efe6'; ctx.fillRect(cx - 420, g - 70, 840, 20); ctx.fillStyle = '#d9d5c9'; ctx.fillRect(cx - 420, g - 50, 840, 26);
-      for (let i = -3; i <= 3; i++) { ctx.fillStyle = '#c9c9c9'; ctx.beginPath(); ctx.ellipse(cx + i * 110, g - 72, 22, 4, 0, 0, TAU); ctx.fill(); ctx.fillStyle = '#7a2230'; ctx.fillRect(cx + i * 110 + 26, g - 92, 5, 20); }
-      for (let i = -1; i <= 1; i++) { ctx.fillStyle = '#f2e6c8'; ctx.fillRect(cx + i * 300 - 3, g - 110, 6, 38); ctx.fillStyle = '#ffcf6a'; circ(ctx, cx + i * 300, g - 114, 4 + Math.sin(t * 9 + i) * 0.8, '#ffcf6a'); }
+    },
+    front(ctx, cam, t) {
+      const g = this.ground; const cx = 900;
+      // long table with white cloth, in front of the diners
+      ctx.fillStyle = '#f2efe6'; ctx.fillRect(cx - 420, g - 52, 840, 16); ctx.fillStyle = '#d9d5c9'; ctx.fillRect(cx - 420, g - 36, 840, 26);
+      ctx.fillStyle = 'rgba(0,0,0,.18)'; for (let x = cx - 400; x < cx + 420; x += 60) ctx.fillRect(x, g - 36, 2, 26);
+      for (let i = -3; i <= 3; i++) { ctx.fillStyle = '#c9c9c9'; ctx.beginPath(); ctx.ellipse(cx + i * 110, g - 53, 22, 4, 0, 0, TAU); ctx.fill(); ctx.fillStyle = '#7a2230'; ctx.fillRect(cx + i * 110 + 26, g - 72, 5, 20); ctx.fillStyle = '#b9bcc2'; ctx.fillRect(cx + i * 110 - 34, g - 55, 10, 2); }
+      for (let i = -1; i <= 1; i++) { ctx.fillStyle = '#f2e6c8'; ctx.fillRect(cx + i * 300 - 3, g - 90, 6, 38); ctx.fillStyle = '#ffcf6a'; circ(ctx, cx + i * 300, g - 94, 4 + Math.sin(t * 9 + i) * 0.8, '#ffcf6a'); }
     },
   };
 
@@ -255,9 +263,13 @@
       ctx.fillStyle = '#10182a'; ctx.fillRect(560, 120, 360, 220); ctx.strokeStyle = '#6b5a45'; ctx.lineWidth = 10; ctx.strokeRect(560, 120, 360, 220); ctx.beginPath(); ctx.moveTo(740, 120); ctx.lineTo(740, 340); ctx.stroke();
       for (let i = 0; i < 20; i++) { ctx.fillStyle = 'rgba(255,220,140,.6)'; ctx.fillRect(580 + (i * 47) % 320, 200 + (i * 31) % 120, 5, 6); }
       ctx.fillStyle = '#5a3d2a'; ctx.fillRect(0, g, this.w, 200);
-      ctx.fillStyle = '#8a8f96'; ctx.fillRect(200, g - 60, 240, 60); ctx.fillStyle = '#c8b9a0'; ctx.fillRect(210, g - 80, 220, 25); // bed
-      ctx.fillStyle = '#6b4b33'; ctx.fillRect(1000, g - 70, 160, 14); ctx.fillRect(1010, g - 56, 10, 56); ctx.fillRect(1140, g - 56, 10, 56);
-      ctx.fillStyle = '#e9e1d0'; ctx.fillRect(1040, g - 86, 40, 16);
+      ctx.fillStyle = '#6b5a45'; ctx.fillRect(194, g - 84, 12, 84); // headboard
+      ctx.fillStyle = '#8a8f96'; ctx.fillRect(200, g - 36, 240, 36); ctx.fillStyle = '#c8b9a0'; ctx.fillRect(208, g - 50, 224, 16); ctx.fillStyle = '#e9e4da'; ctx.fillRect(212, g - 60, 44, 12); // bed + pillow
+    },
+    front(ctx, cam, t) {
+      const g = this.ground;
+      ctx.fillStyle = '#6b4b33'; ctx.fillRect(1000, g - 52, 160, 12); ctx.fillRect(1010, g - 40, 10, 40); ctx.fillRect(1140, g - 40, 10, 40);
+      ctx.fillStyle = '#e9e1d0'; ctx.fillRect(1040, g - 64, 40, 12); ctx.fillStyle = '#c9c2b0'; ctx.fillRect(1090, g - 58, 30, 6);
     },
   };
 
@@ -376,6 +388,16 @@
     stage.front && stage.front(ctx, cam, t);
     cam.end(ctx);
   };
+
+  // ---------------------------------------------------------------- seats (seat top in px above the ground) and chair styles
+  const S_ = Env.stages;
+  S_.subway.seats = [630, 1390, 2150].map(x => ({ x: x + 90, w: 180, top: 32 }));
+  S_.van.seats = [120, 500, 880, 1260].map(x => ({ x: x + 100, w: 200, top: 36 }));
+  S_.park.seats = []; for (let x = 300; x < S_.park.w; x += 700) S_.park.seats.push({ x: x + 175, w: 170, top: 32 });
+  S_.vip.seats = []; for (let x = 200; x < S_.vip.w; x += 420) S_.vip.seats.push({ x: x + 130, w: 260, top: 38 });
+  S_.home.seats = [{ x: 320, w: 230, top: 50, kind: 'bed' }];
+  S_.room.chair = 'wood'; S_.home.chair = 'wood'; S_.dinner.chair = 'plush'; S_.vip.chair = 'plush'; S_.office.chair = 'leather'; S_.van.chair = 'metal';
+  S_.sea.chair = 'none'; S_.beach.chair = 'none'; S_.island.chair = 'none';
 
   R6.Env = Env;
 })();

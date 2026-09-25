@@ -25,7 +25,7 @@
     s1Intro(next) {
       const sc1 = R6.cutscene({
         id: 's1_intro', title: 'Prólogo: dívidas', stage: 'home', music: 'sad', cam: [700, 380, 1.15],
-        actors: [{ id: 'p', look: L.civ(), x: 300, anim: 'sleep', dir: 1, view: 'side' }],
+        actors: [{ id: 'p', look: L.civ(), x: 405, anim: 'sleep', dir: 1, view: 'side' }],
         steps: [
           { caption: 'TEMPORADA 1', sub: 'Seul · uma madrugada qualquer', dur: 3.2, big: true },
           { sfx: 'beep' }, { wait: 0.4 }, { sfx: 'beep' },

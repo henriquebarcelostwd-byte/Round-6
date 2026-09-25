@@ -161,7 +161,7 @@
       super(opts);
       this.gameId = 'rps'; this.name = 'rps';
       this.variant = opts.variant || (this.campaign ? 'roulette' : 'practice');
-      this.stage = R6.Env.stages.room; this.cam = new R6.Camera({ bounds: { x: 0, y: 0, w: 1400, h: 760 } }); this.cam.set(700, 400, 1.2);
+      this.stage = R6.Env.stages.room; this.cam = new R6.Camera({ bounds: { x: 0, y: 0, w: 1400, h: 900 } }); this.cam.set(700, 480, 1.0);
       this.rec = recruiterLook(); const S = R6.State;
       this.pl = Object.assign({}, S.s ? S.s.player.look : R6.Char.makeLook({ num: 456 }), { outfit: 'civil', civ: { top: '#3a3f47', bottom: '#2d2d33' } });
       this.wins = 0; this.losses = 0; this.need = 3; this.hist = []; this.round = 0;
@@ -287,11 +287,12 @@
       const st = this.stage; const T = this.turn;
       R6.Env.render(ctx, st, this.cam, this.t, c => {
         const g = st.ground;
-        R6.Char.draw(c, this.pl, 540, g, { view: 'side', dir: 1, anim: T && T.who === 'pl' && T.phase !== 'lift' ? (T.pulled && !T.fatal ? 'sad' : 'hold') : 'sit', t: this.t, scale: 1.45, expr: T && T.who === 'pl' ? 'scared' : 'determined' });
-        if (!this.recGone) R6.Char.draw(c, this.rec, 860, g, { view: 'side', dir: -1, anim: T && T.who === 'rec' && T.phase !== 'lift' ? 'hold' : 'sit', t: this.t, scale: 1.45, expr: 'smirk' });
+        R6.Props.chair(c, 540, g, 1.45, 1, 'wood'); if (!this.recGone) R6.Props.chair(c, 860, g, 1.45, -1, 'wood');
+        R6.Char.draw(c, this.pl, 540, g, { view: 'side', dir: 1, seated: 'chair', anim: T && T.who === 'pl' && T.phase !== 'lift' ? (T.pulled && !T.fatal ? 'sad' : 'hold') : 'sit', t: this.t, scale: 1.45, expr: T && T.who === 'pl' ? 'scared' : 'determined' });
+        if (!this.recGone) R6.Char.draw(c, this.rec, 860, g, { view: 'side', dir: -1, seated: 'chair', anim: T && T.who === 'rec' && T.phase !== 'lift' ? 'hold' : 'sit', t: this.t, scale: 1.45, expr: 'smirk' });
         else { c.save(); c.translate(900, g - 20); c.rotate(1.4); c.fillStyle = '#2a1d16'; c.fillRect(-30, -10, 60, 12); c.restore(); }
         // the revolver: a dark silhouette resting on the table (never detailed)
-        if (!T || T.phase === 'lift' && T.t < 0.5) { c.fillStyle = '#121214'; c.fillRect(680, g - 82, 46, 8); c.fillRect(676, g - 82, 10, 14); }
+        if (!T || T.phase === 'lift' && T.t < 0.5) { c.fillStyle = '#121214'; c.fillRect(680, g - 60, 46, 8); c.fillRect(676, g - 60, 10, 8); }
       });
       R6.UI.vignette(ctx, 0.75);
       // chamber indicator (abstract)

@@ -151,8 +151,8 @@
         render(ctx) {
           ctx.fillStyle = '#07080b'; ctx.fillRect(0, 0, R6.W, R6.H);
           this.fx.draw(ctx);
-          const an = won ? (R6.VictoryFX ? R6.VictoryFX.anim() : 'celebrate') : 'sitSad';
-          R6.Char.draw(ctx, this.look, 1040, 600, { view: an === 'bow' || an === 'spin' ? 'side' : 'front', anim: an, t: this.t, scale: 2.4, alpha: Math.min(1, this.t * 2) });
+          const an = won ? (R6.VictoryFX ? R6.VictoryFX.anim() : 'celebrate') : 'hugKnees';
+          R6.Char.draw(ctx, this.look, 1040, 600, { view: an === 'bow' || an === 'spin' || an === 'hugKnees' ? 'side' : 'front', anim: an, t: this.t, scale: 2.4, alpha: Math.min(1, this.t * 2) });
           R6.UI.text(ctx, won ? 'VITÓRIA' : 'ELIMINADO', R6.W / 2, 170, { size: 96, fam: 'title', align: 'center', color: won ? '#2ec4b6' : '#ff3b5c', spacing: 8 });
           R6.UI.text(ctx, game.title || '', R6.W / 2, 220, { size: 20, align: 'center', color: '#bbb', spacing: 3 });
           if (score != null) R6.UI.text(ctx, (game.scoreLabel || 'PONTOS') + ': ' + score + (best ? '   ★ NOVO RECORDE' : ''), R6.W / 2, 290, { size: 30, align: 'center', color: '#f2c14e', fam: 'mono' });

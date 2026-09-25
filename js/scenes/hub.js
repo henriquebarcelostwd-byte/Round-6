@@ -112,7 +112,8 @@
       // world objects: bunks, tables, pig, cameras, board, items
       const O = this.world.objects;
       const blocks = new Map(); for (const b of D.bunks) blocks.set(b.bx + ',' + b.by, b);
-      for (const b of blocks.values()) { const x = b.bx * TS, y = (b.by + 2) * TS; O.push({ x: x + 48, y, sy: y - 4, draw: (c) => R6.Props.bunk(c, x, y, 96, 30, 5, { ladder: true }) }); }
+      this.bunkSleep = new Map();
+      for (const b of blocks.values()) { const x = b.bx * TS, y = (b.by + 2) * TS, key = b.bx + ',' + b.by; this.bunkSleep.set(key, [null, null, null, null, null]); O.push({ x: x + 48, y, sy: y - 4, draw: (c, t) => R6.Props.bunk(c, x, y, 96, 30, 5, { ladder: true, sleepers: this.bunkSleep.get(key), t }) }); }
       for (const t of D.tables) O.push({ x: t.x, y: t.y, sy: t.y + 30, draw: (c) => { c.fillStyle = '#9aa0a6'; c.fillRect(t.tx * TS, t.ty * TS - 6, 160, 26); c.fillStyle = '#7d8388'; c.fillRect(t.tx * TS, t.ty * TS + 20, 160, 8); if (this.meal) for (let k = 0; k < 4; k++) R6.Props.tray(c, t.tx * TS + 22 + k * 38, t.ty * TS + 6, {}); } });
       O.push({ x: D.pig.x, y: D.pig.y, sy: 99999, draw: (c, t) => { c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(D.pig.x, D.pig.y + 40, 70, 18, 0, 0, TAU); c.fill(); R6.Props.piggy(c, D.pig.x, D.pig.y - 150 + Math.sin(t * 0.8) * 3, 64, Math.min(1, S.s.prize / 45.6e9), t, { cable: 400 }); } });
       for (const [cx, cy, a] of [[3, 7, 0.6], [MW - 4, 7, 2.5], [3, 32, -0.6], [MW - 4, 32, 3.6]]) O.push({ x: cx * TS, y: cy * TS, sy: cy * TS - 30, draw: (c, t) => R6.Props.camera(c, cx * TS, cy * TS - 20, a + Math.sin(t * 0.4) * 0.5, { t }) });
@@ -122,6 +123,17 @@
       for (const it of this.items) O.push({ x: it.x, y: it.y, sy: it.y, draw: (c, t) => { if (it.taken) return; c.fillStyle = `rgba(242,193,78,${0.25 + Math.sin(t * 4) * 0.1})`; c.beginPath(); c.arc(it.x, it.y, 12, 0, TAU); c.fill(); c.fillStyle = '#f2c14e'; c.fillRect(it.x - 5, it.y - 3, 10, 6); } });
       if (this.cfg.vote) O.push({ x: D.board.x, y: D.board.y, sy: D.board.y, draw: (c) => this.drawBoard(c) });
       this.cam.set(this.pl.x, this.pl.y, 1.2);
+    }
+    // ---------- sleeping inside the bunks (not on the floor) ----------
+    tuck(a, bunk) {
+      const arr = this.bunkSleep && this.bunkSleep.get(bunk.bx + ',' + bunk.by); if (!arr) return;
+      a.inBunk = bunk; a.visible = false; a.solid = false; a.lie = null; a.stop();
+      arr[bunk.lv] = a.look;
+    }
+    wake(a) {
+      if (!a || !a.inBunk) return; const bunk = a.inBunk; a.inBunk = null;
+      const arr = this.bunkSleep.get(bunk.bx + ',' + bunk.by); if (arr && arr[bunk.lv] === a.look) arr[bunk.lv] = null;
+      const q = this.map.nearestFree(bunk.x, bunk.y + 8); a.x = q.x; a.y = q.y; a.visible = true; a.solid = true;
     }
     // ---------- runner host API ----------
     getActor(id) {
@@ -170,12 +182,12 @@
         if (ai.act === 'pig' && Math.random() < dt * 0.1) a.say(U.pick(SAY.prize), 2.4);
         return;
       }
-      a.forceAnim = null; a.idleAnim = 'idle'; a.lie = null;
+      a.forceAnim = null; a.idleAnim = 'idle'; a.lie = null; this.wake(a);
       const p = a.p; const r = Math.random();
       const nightK = this.night ? 0.7 : 0.15;
       if (this.meal && !ai.ate) { const tb = U.pick(this.D.tables); a.goTo(this.world, tb.x + U.rand(-70, 70), tb.y + U.rand(40, 60), false, () => { a.faceTo(tb.x, tb.y); a.idleAnim = 'eat'; ai.ate = true; }); ai.act = 'eat'; ai.cd = U.rand(8, 16); return; }
       if (r < nightK) { // sleep at own bunk
-        a.goTo(this.world, a.bunk.x + U.rand(-10, 10), a.bunk.y - 6, false, () => { a.lie = { anim: 'sleep' }; });
+        a.goTo(this.world, a.bunk.x + U.rand(-10, 10), a.bunk.y + 4, false, () => this.tuck(a, a.bunk));
         ai.act = 'sleep'; ai.cd = U.rand(15, 40); return;
       }
       if (r < nightK + 0.2 && p.friends.length) { // talk with a friend who is present
@@ -188,7 +200,7 @@
       }
       if (r < nightK + 0.36) { const P = this.D.pig; a.goTo(this.world, P.x + U.rand(-120, 120), P.y + U.rand(40, 120), false, () => { a.face('up'); a.idleAnim = 'look'; }); ai.act = 'pig'; ai.cd = U.rand(5, 10); return; }
       if (r < nightK + 0.42) { a.goTo(this.world, this.D.bath.x + U.rand(-60, 60), this.D.bath.y + U.rand(-30, 40), false); ai.act = 'bath'; ai.cd = U.rand(4, 8); return; }
-      if (r < nightK + 0.55 && (p.fear || 0) > 0.55) { a.goTo(this.world, a.bunk.x, a.bunk.y + 10, false, () => { a.idleAnim = Math.random() < 0.5 ? 'sitSad' : 'cry'; }); ai.act = 'sad'; ai.cd = U.rand(8, 14); return; }
+      if (r < nightK + 0.55 && (p.fear || 0) > 0.55) { a.goTo(this.world, a.bunk.x, a.bunk.y + 10, false, () => { a.idleAnim = Math.random() < 0.5 ? 'hugKnees' : 'cry'; }); ai.act = 'sad'; ai.cd = U.rand(8, 14); return; }
       // wander
       const tx = U.rand(20, 44) * TS, ty = U.rand(14, 32) * TS; const q = this.map.nearestFree(tx, ty);
       a.goTo(this.world, q.x, q.y, false); ai.act = 'wander'; ai.cd = U.rand(2, 6);
@@ -219,6 +231,7 @@
     updPlayer(dt) {
       const I = R6.Input, pl = this.pl;
       if (pl.lie && (I.axis().x || I.axis().y)) pl.lie = null;
+      if (pl.inBunk) { if (I.axis().x || I.axis().y || I.actP('interact')) { this.wake(pl); R6.Audio.sfx('step'); } else { pl.steer(0, 0); this.prompt = null; return; } }
       const ax = I.axis(); pl.steer(ax.x, ax.y, I.act('run'));
       // interaction prompt
       this.prompt = null;
@@ -226,8 +239,10 @@
       near.sort((a, b) => U.dist2(a.x, a.y, pl.x, pl.y) - U.dist2(b.x, b.y, pl.x, pl.y));
       const it = this.items.find(i => !i.taken && U.dist(i.x, i.y, pl.x, pl.y) < 36);
       const atBunk = U.dist(pl.x, pl.y, this.myBunk.x, this.myBunk.y) < 50;
+      const sleeper = this.bots.find(b => b.inBunk && !b.dead && U.dist(pl.x, pl.y, b.inBunk.x, b.inBunk.y) < 44);
       if (it) this.prompt = { x: it.x, y: it.y - 30, label: 'PEGAR', fn: () => this.pickItem(it) };
       else if (near.length) { const a = near[0]; this.prompt = { x: a.x, y: a.y - 70, label: a.kind === 'guard' ? 'FALAR' : 'INTERAGIR', fn: () => this.interact(a) }; }
+      else if (sleeper) { this.prompt = { x: sleeper.inBunk.x, y: sleeper.inBunk.y - 60, label: 'BELICHE (#' + U.pad(sleeper.p.num) + ' dormindo)', fn: () => this.interactSleeper(sleeper) }; }
       else if (atBunk && this.cfg.canSleep) this.prompt = { x: this.myBunk.x, y: this.myBunk.y - 60, label: 'DORMIR', fn: () => this.sleep() };
       else if (U.dist(pl.x, pl.y, (MW - 10) * TS, 9 * TS) < 60) this.prompt = { x: (MW - 10) * TS, y: 9 * TS - 60, label: 'PORTA', fn: () => R6.Toast.show('Trancada. Um guarda está de olho em você.', { color: '#ff5a6a' }) };
       if (this.prompt && I.actP('interact')) this.prompt.fn();
@@ -251,7 +266,7 @@
     }
     sleep() {
       if (this.cfg.onSleep) return this.cfg.onSleep(this);
-      this.pl.lie = { anim: 'sleep' }; this.pl.x = this.myBunk.x; this.pl.y = this.myBunk.y - 6; this.completeTask('sleep');
+      this.tuck(this.pl, this.myBunk); this.completeTask('sleep');
       R6.Toast.show('Você deita e fecha os olhos por um tempo…', { color: '#9fc2ff' });
     }
     // ---------- social interactions ----------
@@ -266,11 +281,18 @@
       if (food) choices.push({ t: 'Dividir comida (' + R6.ITEMS[food].name + ')', cb: () => { S.take(food); S.addRel(p, 18, 'shared'); S.s.stats.helped++; S.karma(1); a.setAnim('eat', 2); a.say('Obrigado… de verdade.', 2); S.witness(this.world.near(a.x, a.y, 150, x => x.ai && x !== a).map(x => x.p), 'witness_help', 3); } });
       if (p.rel >= 15 && !p.allied) choices.push({ t: 'Propor aliança', cb: () => this.ally(a) });
       if (this.cfg.persuade && !this.persuaded.has(p.id)) choices.push({ t: 'Convencer a votar ' + this.cfg.persuade.side, sub: 'votação', cb: () => this.persuade(a) });
-      if ((a.anim === 'cry' || a.anim === 'sitSad' || (p.fear || 0) > 0.6)) choices.push({ t: 'Consolar', cb: () => { S.addRel(p, 10, 'comforted'); p.fear = Math.max(0, (p.fear || 0) - 0.25); a.clearAnim(); a.idleAnim = 'idle'; a.say('…Obrigado. Eu precisava disso.', 2.4); } });
+      if ((a.anim === 'cry' || a.anim === 'sitSad' || a.anim === 'hugKnees' || (p.fear || 0) > 0.6)) choices.push({ t: 'Consolar', cb: () => { S.addRel(p, 10, 'comforted'); p.fear = Math.max(0, (p.fear || 0) - 0.25); a.clearAnim(); a.idleAnim = 'idle'; a.say('…Obrigado. Eu precisava disso.', 2.4); } });
       if (a.lie && p.inv && p.inv.length) choices.push({ t: 'Roubar enquanto dorme', color: '#ff5a6a', cb: () => this.steal(a) });
       choices.push({ t: 'Provocar', color: '#ff5a6a', cb: () => this.provoke(a) });
       choices.push({ t: 'Sair', cb: () => { } });
       R6.Dialog.show({ who: p, text: this.greeting(a), expr: p.rel < -20 ? 'angry' : p.rel > 30 ? 'happy' : 'neutral', choices });
+    }
+    interactSleeper(a) {
+      const p = a.p; const S = R6.State; const choices = [];
+      if (p.inv && p.inv.length) choices.push({ t: 'Mexer nas coisas dele(a) enquanto dorme', color: '#ff5a6a', cb: () => this.steal(a) });
+      choices.push({ t: 'Acordar #' + U.pad(p.num), cb: () => { this.wake(a); a.ai.cd = 6; a.faceTo(this.pl.x, this.pl.y); a.emo('…', 1.2); a.say(U.pick(['Hm? Que foi?', 'Me deixa dormir…', 'Já é hora?']), 2); S.addRel(p, -2, null, { silent: true }); } });
+      choices.push({ t: 'Deixar dormir', cb: () => { } });
+      R6.Dialog.show({ who: p, text: '(#' + U.pad(p.num) + ' dorme encolhido no beliche' + (p.inv && p.inv.length ? '. Há alguma coisa debaixo do travesseiro.)' : '.)'), expr: 'sleep', choices });
     }
     greeting(a) {
       const p = a.p;
@@ -301,9 +323,9 @@
     }
     steal(a) {
       const p = a.p; const S = R6.State; const item = p.inv.shift(); S.give(item);
-      const seen = this.world.near(a.x, a.y, 200, x => x.ai && x !== a && !x.lie).map(x => x.p);
+      const seen = this.world.near(a.inBunk ? a.inBunk.x : a.x, a.inBunk ? a.inBunk.y : a.y, 200, x => x.ai && x !== a && !x.lie && !x.inBunk && x.visible).map(x => x.p);
       S.s.stats.betrayals++; S.karma(-2);
-      if (seen.length) { S.witness(seen, 'witness_steal', -10); R6.Toast.show(seen.length + ' pessoa(s) viram você roubar.', { color: '#ff5a6a' }); if (Math.random() < 0.5) { a.lie = null; S.addRel(p, -35, 'stole'); a.say('LADRÃO!', 2); } }
+      if (seen.length) { S.witness(seen, 'witness_steal', -10); R6.Toast.show(seen.length + ' pessoa(s) viram você roubar.', { color: '#ff5a6a' }); if (Math.random() < 0.5) { a.lie = null; this.wake(a); S.addRel(p, -35, 'stole'); a.say('LADRÃO!', 2); } }
       else S.remember(p, 'stole');
     }
     provoke(a) {
@@ -387,8 +409,8 @@
       const B = this.D.board; this.byId = new Map(this.bots.map(b => [b.p.id, b]));
       const P = this.D.pig; const slots = []; for (let r = 0; r < 16; r++) for (let c = -13; c <= 13; c++) { const x = B.x + c * 34 + (r % 2) * 17, y = B.y + 110 + r * 30; if (U.dist(x, y, P.x, P.y - 150) > 95) slots.push({ x, y }); }
       const order = this.bots.filter(b => !b.dead).sort((a, b) => U.dist2(a.x, a.y, B.x, B.y) - U.dist2(b.x, b.y, B.x, B.y));
-      order.forEach((b, k) => { const sl = slots[k % slots.length]; b.lie = null; b.clearAnim(); b.idleAnim = 'idle'; b.ai.cd = 999; b.ai.act = 'vote'; const q = this.map.nearestFree(sl.x + U.rand(-6, 6), sl.y + U.rand(-5, 5)); b.goTo(this.world, q.x, q.y, false, () => b.face('up')); });
-      this.pl.lie = null; const pq = this.map.nearestFree(B.x + 20, B.y + 80); this.pl.goTo(this.world, pq.x, pq.y, false, () => this.pl.face('up'));
+      order.forEach((b, k) => { const sl = slots[k % slots.length]; b.lie = null; this.wake(b); b.clearAnim(); b.idleAnim = 'idle'; b.ai.cd = 999; b.ai.act = 'vote'; const q = this.map.nearestFree(sl.x + U.rand(-6, 6), sl.y + U.rand(-5, 5)); b.goTo(this.world, q.x, q.y, false, () => b.face('up')); });
+      this.pl.lie = null; this.wake(this.pl); const pq = this.map.nearestFree(B.x + 20, B.y + 80); this.pl.goTo(this.world, pq.x, pq.y, false, () => this.pl.face('up'));
       this.voteCam = { x: B.x, y: B.y + 90 };
       R6.Music.play('tension'); R6.Music.setIntensity(0.4);
       R6.Dialog.announce(V.text || 'Conforme a cláusula 3, o jogo pode ser encerrado se a maioria concordar. Vamos votar. O para continuar, X para encerrar.', null, 3.5);
@@ -450,7 +472,7 @@
       const S = R6.State; this.night = true; this.riot = { t: 0, dur: R6.Save.D(55, 70, 85), kills: 0, killT: 3, hitCd: 0 };
       R6.Music.play('action'); R6.Music.setIntensity(0.9); R6.Audio.sfx('doorSlam'); R6.Audio.sfx('crowdGasp'); R6.Audio.loop('heartbeat', 0.5);
       // attackers: bullies/aggressive + enemies of the player
-      for (const b of this.bots) { const tr = b.p.tr; b.ai.riotRole = (tr.betray > 0.7 && tr.str > 0.55 && !b.p.key) || b.p.key === 'gangster' || b.p.rel <= -40 ? 'attacker' : b.p.rel >= 40 || b.p.allied ? 'ally' : Math.random() < 0.5 ? 'hide' : 'victim'; b.ai.hp = 3; b.lie = null; }
+      for (const b of this.bots) { const tr = b.p.tr; b.ai.riotRole = (tr.betray > 0.7 && tr.str > 0.55 && !b.p.key) || b.p.key === 'gangster' || b.p.rel <= -40 ? 'attacker' : b.p.rel >= 40 || b.p.allied ? 'ally' : Math.random() < 0.5 ? 'hide' : 'victim'; b.ai.hp = 3; b.lie = null; this.wake(b); }
       R6.Dialog.announce('…', null, 0.6);
       R6.Toast.show('AS LUZES SE APAGARAM. SOBREVIVA ATÉ ELAS VOLTAREM.', { color: '#ff3b5c', icon: 'x', dur: 5 });
     }
@@ -507,7 +529,7 @@
       for (const g of this.guards) g.frozen = false;
       // everyone lines up toward the exit (no teleports: they walk)
       const ex = this.D.exitPos;
-      this.bots.forEach((b, i) => { b.lie = null; b.clearAnim(); b.idleAnim = 'idle'; b.canOpenDoors = true; setTimeout(() => { if (!b.dead) b.goTo(this.world, ex.x + U.rand(-50, 50), ex.y + U.rand(-30, 20), false, () => { b.visible = false; b.solid = false; }); }, 300 + i * 40); });
+      this.wake(this.pl); this.bots.forEach((b, i) => { b.lie = null; this.wake(b); b.clearAnim(); b.idleAnim = 'idle'; b.canOpenDoors = true; setTimeout(() => { if (!b.dead) b.goTo(this.world, ex.x + U.rand(-50, 50), ex.y + U.rand(-30, 20), false, () => { b.visible = false; b.solid = false; }); }, 300 + i * 40); });
       this.pl.lie = null;
     }
     updLeaving(dt) { }

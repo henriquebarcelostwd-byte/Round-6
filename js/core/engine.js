@@ -93,6 +93,7 @@
       }
       if (E.flashT > 0) { ctx.save(); ctx.globalAlpha = Math.max(0, E.flashT / E.flashD) * 0.85; ctx.fillStyle = E.flashC; ctx.fillRect(0, 0, R6.W, R6.H); ctx.restore(); }
       if (E.paused && R6.PauseMenu) R6.PauseMenu.render(ctx);
+      if (R6.Touch) R6.Touch.draw(ctx);
       if (E.showFps) {
         R6.UI.text(ctx, `${Math.round(E.fps)} fps · ${E.scene && E.scene.name || ''}`, 8, R6.H - 8, { size: 13, color: '#8f8', fam: 'mono' });
       }

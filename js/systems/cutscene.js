@@ -3,6 +3,9 @@
 (function () {
   const U = R6.U;
 
+  // upper-body animations that can be played while staying seated
+  const UPPER = new Set(['talk', 'hold', 'point', 'cry', 'sad', 'look', 'wave', 'eat', 'argue', 'scared', 'celebrate', 'fistpump', 'handsup', 'shrug', 'sit', 'sitSad']);
+
   // ---------------- side-view stage actor ----------------
   class StageActor {
     constructor(o) {
@@ -13,8 +16,17 @@
       this.scale = o.scale || 1.25; this.visible = o.visible !== false; this.item = o.item || null;
       this.target = null; this.speed = 110; this.running = false; this.holdAnim = null; this.bubble = null; this.emote = null; this.dead = false; this.tint = null;
       this.vy = 0; this.airY = 0; this.fallT = 0; this.falling = false;
+      this.seat = null; this.seatRef = null; this.lift = 0; this.setSeatFor(this.anim);
     }
-    walkTo(x, z, run) { this.target = { x, z: z != null ? z : this.z }; this.running = !!run; }
+    // which kind of support an animation needs: chair (sit/sitSad), floor (sitFloor/hugKnees) or bed (sleep/lie)
+    setSeatFor(name) {
+      if (name === 'sit' || name === 'sitSad') { if (this.seat !== 'chair') { this.seat = 'chair'; this.seatRef = null; } }
+      else if (name === 'sitFloor' || name === 'hugKnees') { this.seat = 'floor'; this.seatRef = null; }
+      else if (name === 'sleep' || name === 'lie') { if (this.seat !== 'bed') { this.seat = 'bed'; this.seatRef = null; } }
+      else if (UPPER.has(name) && this.seat) { /* stays seated: only the upper body changes */ }
+      else { this.seat = null; this.seatRef = null; }
+    }
+    walkTo(x, z, run) { this.target = { x, z: z != null ? z : this.z }; this.running = !!run; this.seat = null; this.seatRef = null; }
     get busy() { return !!this.target; }
     say(text, dur = 2.6) { this.bubble = { text, t: 0, dur }; }
     emo(icon, dur = 1.6) { this.emote = { icon, t: 0, dur }; }
@@ -32,17 +44,19 @@
         }
       }
       if (this.falling) { this.fallT += dt; this.vy += 1400 * dt; this.airY += this.vy * dt; }
+      this.lift = U.approach(this.lift, this.seatRef ? this.seatRef.lift || 0 : 0, dt * 160);
       this.animT += dt;
       if (this.bubble) { this.bubble.t += dt; if (this.bubble.t > this.bubble.dur) this.bubble = null; }
       if (this.emote) { this.emote.t += dt; if (this.emote.t > this.emote.dur) this.emote = null; }
     }
-    feetY(ground) { return (this.y != null ? this.y : ground) - this.z * 70 + this.airY; }
+    feetY(ground) { return (this.y != null ? this.y : ground) - this.z * 70 + this.airY - this.lift; }
     sc() { return this.scale * (1 - this.z * 0.22); }
     draw(ctx, ground, t) {
       if (!this.visible || this.alpha <= 0) return;
       const look = this.tint ? Object.assign({}, this.look, { tint: this.tint }) : this.look;
       const ahead = this.anim === 'die' || this.anim === 'dead' || this.anim === 'fall' || this.anim === 'trip' || this.anim === 'getup';
-      R6.Char.draw(ctx, look, this.x, this.feetY(ground), { view: this.view, dir: this.dir, anim: this.anim, t: ahead ? this.animT : this.animT, scale: this.sc(), expr: this.expr, alpha: this.alpha, item: this.item, back: this.back, shadow: !this.falling });
+      const seated = this.seat === 'chair' || this.seat === 'floor' ? this.seat : null;
+      R6.Char.draw(ctx, look, this.x, this.feetY(ground), { view: this.view, dir: this.dir, anim: this.anim, t: ahead ? this.animT : this.animT, scale: this.sc(), expr: this.expr, alpha: this.alpha, item: this.item, back: this.back, shadow: !this.falling && !this.lift && this.seat !== 'bed', seated });
     }
     drawOverlay(ctx, ground) {
       const hy = this.feetY(ground) - 108 * this.sc() * (this.look.h || 1);
@@ -119,10 +133,10 @@
       if (st.say != null || st.text != null && st.who != null) {
         if (sk) return null;
         const who = this.speaker(st.say != null ? st.say : st.who); const a = this.actor(st.say);
-        if (a && a.anim !== undefined && st.talkAnim !== false && !a.target && !a.dead && (a.anim === 'idle' || a.anim === 'talk')) { a._prevAnim = a.anim; a.anim = 'talk'; if (a.forceAnim !== undefined) a.setAnim('talk'); }
+        if (a && a.anim !== undefined && st.talkAnim !== false && !a.target && !a.dead && (a.anim === 'idle' || a.anim === 'talk' || (a.seat === 'chair' && (a.anim === 'sit' || a.anim === 'sitSad')))) { a._prevAnim = a.anim === 'talk' ? a._prevAnim || 'idle' : a.anim; a.anim = 'talk'; if (a.forceAnim !== undefined) a.setAnim('talk'); }
         if (a && st.expr) a.expr = st.expr;
         let fin = false;
-        R6.Dialog.show({ who, text: st.text, expr: st.expr || (a && a.expr), name: st.name, onDone: () => { fin = true; if (a) { if (a.forceAnim !== undefined) a.clearAnim(); else if (a.anim === 'talk') a.anim = 'idle'; } } });
+        R6.Dialog.show({ who, text: st.text, expr: st.expr || (a && a.expr), name: st.name, onDone: () => { fin = true; if (a) { if (a.forceAnim !== undefined) a.clearAnim(); else if (a.anim === 'talk') a.anim = a._prevAnim || 'idle'; } } });
         return this.task(() => fin, true);
       }
       if (st.lines) { const r = this.sub(st.lines.map(l => ({ say: l[0], text: l[1], expr: l[2] }))); return this.task(dt => { r.update(dt); return r.done; }, true); }
@@ -168,7 +182,7 @@
       if (st.face) { const a = this.actor(st.face); if (a) { if (a.goTo) { if (st.to) a.faceTo(...st.to); else a.face(st.dir); } else { if (st.view) a.view = st.view; if (st.dir) a.dir = st.dir; if (st.toward) { const b = this.actor(st.toward); if (b) a.dir = b.x > a.x ? 1 : -1; } } } return null; }
       if (st.anim) {
         const a = this.actor(st.anim); if (!a) return null;
-        if (a.setAnim) { a.setAnim(st.name, st.keep ? 0 : (st.hold || 0)); } else { a.anim = st.name; a.animT = 0; a.holdAnim = st.keep ? st.name : null; }
+        if (a.setAnim) { a.setAnim(st.name, st.keep ? 0 : (st.hold || 0)); } else { a.anim = st.name; a.animT = 0; a.holdAnim = st.keep ? st.name : null; if (a.setSeatFor) a.setSeatFor(st.name); }
         if (st.hold && !sk) { const h = st.hold; return this.task(((t) => dt => (t += dt) >= h)(0)); }
         return null;
       }
@@ -246,6 +260,7 @@
       this.cam.set(c[0], c[1], c[2] || 1);
       this.fx = new R6.Particles(800);
       this.t = 0; this.letterbox = o.letterbox != null ? o.letterbox : 1;
+      this.autoChairs = [];
       (o.actors || []).forEach(a => this.spawn(a));
       this.rain = (o.rain || this.stage.rain) ? new R6.Rain(o.rainN || 260) : null;
       if (this.rain && o.lightning) this.rain.lightning = true;
@@ -253,6 +268,26 @@
       this.ended = false;
     }
     getActor(id) { return this.actors.get(id); }
+    // find what a sitting/lying actor rests on: a bench/sofa/bed painted in the stage, or a chair placed for them
+    resolveSeat(a) {
+      const sc = a.sc(), want = a.seat;
+      if (want === 'floor') { a.seatRef = { lift: 0 }; return; }
+      const kind = want === 'bed' ? 'bed' : 'seat';
+      const list = (this.o.seats || []).concat(this.stage.seats || []).filter(q => (q.kind || 'seat') === kind && Math.abs((q.z || 0) - a.z) < 0.15);
+      let best = null, bd = 1e9;
+      for (const q of list) { const d = Math.abs(a.x - q.x); if (d <= q.w / 2 + 24 && d < bd) { best = q; bd = d; } }
+      if (best) {
+        const half = Math.max(0, best.w / 2 - 18 * sc);
+        a.x = U.clamp(a.x, best.x - half, best.x + half);
+        const lift = kind === 'bed' ? best.top - 5 * sc : best.top - R6.Props.CHAIR_TOP * sc;
+        a.seatRef = { decl: best, lift: U.clamp(lift, -4, 70) }; return;
+      }
+      if (kind === 'bed' || this.o.chairs === false || this.stage.chair === 'none') { a.seatRef = { lift: 0, none: true }; return; }
+      let ch = this.autoChairs.find(c => Math.abs(c.x - a.x) < 30 && Math.abs(c.z - a.z) < 0.05);
+      if (!ch) { ch = { x: a.x, z: a.z, dir: a.dir, view: a.view === 'side' ? 'side' : 'front', style: this.o.chair || this.stage.chair || 'wood' }; this.autoChairs.push(ch); }
+      a.x = ch.x; a.seatRef = { auto: ch, lift: 0 };
+    }
+    drawChair(c, ch, g, sc) { R6.Props.chair(c, ch.x, g - ch.z * 70, sc, ch.dir, ch.style, ch.view); }
     spawn(d) {
       const a = new StageActor({ id: d.id || d.spawn, p: d.p, look: d.look, x: d.x, z: d.z, y: d.y, dir: d.dir, view: d.view, anim: d.anim, scale: d.scale || this.o.scale, alpha: d.alpha, visible: d.visible, item: d.item, expr: d.expr, name: d.name });
       this.actors.set(a.id, a); return a;
@@ -289,13 +324,19 @@
       if (this.rain) this.rain.update(dt);
       if (this.o.onUpdate) this.o.onUpdate(this, dt);
       this.runner.update(dt);
+      for (const a of this.actors.values()) {
+        if (a.seat && !a.seatRef && !a.target) this.resolveSeat(a);
+        if (a.seatRef && a.seatRef.auto) { a.seatRef.auto.dir = a.dir; a.seatRef.auto.view = a.view === 'side' ? 'side' : 'front'; }
+      }
     }
     render(ctx) {
       const st = this.stage, g = st.ground;
       R6.Env.render(ctx, st, this.cam, this.t, c => {
         const list = [...this.actors.values()].sort((a, b) => b.z - a.z);
         if (this.o.drawBack) this.o.drawBack(c, this);
-        list.forEach(a => a.draw(c, g, this.t));
+        const used = new Set(); for (const a of list) if (a.seatRef && a.seatRef.auto && a.seat === 'chair') used.add(a.seatRef.auto);
+        for (const ch of this.autoChairs) if (!used.has(ch)) this.drawChair(c, ch, g, 1.25 * (1 - ch.z * 0.22));
+        list.forEach(a => { if (a.seatRef && a.seatRef.auto && a.seat === 'chair') this.drawChair(c, a.seatRef.auto, g, a.sc()); a.draw(c, g, this.t); });
         if (this.o.drawWorld) this.o.drawWorld(c, this);
         this.fx.draw(c);
         list.forEach(a => a.drawOverlay(c, g));

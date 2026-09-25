@@ -293,7 +293,7 @@
         // members
         const drawM = (m, dir) => {
           const f = m.fall; let y = GROUND, rot = 0;
-          if (m.won && !m.winAnim) m.winAnim = m.isPlayer || Math.random() < 0.5 ? 'celebrate' : Math.random() < 0.5 ? 'sit' : 'cry';
+          if (m.won && !m.winAnim) m.winAnim = m.isPlayer || Math.random() < 0.5 ? 'celebrate' : Math.random() < 0.5 ? 'sitFloor' : 'cry';
           let anim = m.won ? m.winAnim : m.stumble > 0 ? 'stagger' : this.tactic === 'hold' && dir === 1 ? 'heave' : 'pull';
           if (this.countdown > 0) anim = 'pull';
           if (f && f.t > 0) { y += f.y; rot = f.rot; anim = f.y > 20 ? 'flail' : 'stagger'; }

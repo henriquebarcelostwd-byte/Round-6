@@ -30,7 +30,20 @@
     let look = build();
     const refresh = (anim) => { look = build(); sc.look = look; sc.pop = 0.25; if (anim) sc.anim = { name: anim, t: 0 }; };
     const cyc = (k, n, d) => { st[k] = (st[k] + d + n) % n; };
-    const edit = (field) => { sc.editing = field; sc.buf = field === 'name' ? '' : ''; R6.Audio.sfx('click'); };
+    const edit = (field) => {
+      R6.Audio.sfx('click');
+      if (R6.Input.lastDevice === 'touch') {
+        sc.prompting = true;
+        R6.textPrompt(field === 'name' ? 'SEU NOME' : 'SEU NÚMERO (1–456)', field === 'name' ? st.name : String(st.num), { numeric: field === 'num', max: field === 'name' ? 14 : 3 }, v => {
+          sc.prompting = false; if (v == null) return;
+          if (field === 'name' && v.trim()) st.name = v.trim().slice(0, 14);
+          if (field === 'num' && v) st.num = U.clamp(parseInt(v, 10) || st.num, 1, 456);
+          refresh('wave');
+        });
+        return;
+      }
+      sc.editing = field; sc.buf = '';
+    };
     const randomize = () => {
       st.fem = Math.random() < 0.45; st.age = Math.random() < 0.15 ? 2 : Math.random() < 0.35 ? 0 : 1;
       st.skin = U.randi(0, 6); st.hs = C().STYLES.indexOf(U.pick(st.fem ? ['long', 'bun', 'pony', 'bob', 'curly', 'short', 'perm', 'twin'] : st.age === 2 ? ['bald', 'perm', 'short', 'buzz'] : ['short', 'buzz', 'slick', 'spiky', 'curly', 'bowl']));
@@ -53,8 +66,8 @@
       { label: 'PELE', sub: () => '◀ ' + (st.skin + 1) + '/' + C().SKINS.length + ' ▶', onLeft: () => { cyc('skin', C().SKINS.length, -1); refresh(); }, onRight: () => { cyc('skin', C().SKINS.length, 1); refresh(); }, action: () => { cyc('skin', C().SKINS.length, 1); refresh(); } },
       { label: 'CABELO', sub: () => '◀ ' + HS_PT[C().STYLES[st.hs]] + ' ▶', onLeft: () => { cyc('hs', C().STYLES.length, -1); refresh(); }, onRight: () => { cyc('hs', C().STYLES.length, 1); refresh(); }, action: () => { cyc('hs', C().STYLES.length, 1); refresh(); } },
       { label: 'COR DO CABELO', sub: () => '◀ ' + (st.hair + 1) + '/' + C().HAIRS.length + ' ▶', onLeft: () => { cyc('hair', C().HAIRS.length, -1); refresh(); }, onRight: () => { cyc('hair', C().HAIRS.length, 1); refresh(); }, action: () => { cyc('hair', C().HAIRS.length, 1); refresh(); } },
-      { label: 'ALTURA', sub: () => '◀ ' + Math.round(150 + (st.h - 0.9) * 180) + ' cm ▶', onLeft: () => { st.h = Math.max(0.9, +(st.h - 0.03).toFixed(2)); refresh(); }, onRight: () => { st.h = Math.min(1.08, +(st.h + 0.03).toFixed(2)); refresh(); } },
-      { label: 'PORTE FÍSICO', sub: () => '◀ ' + (st.build < 0.95 ? 'MAGRO' : st.build < 1.06 ? 'MÉDIO' : st.build < 1.14 ? 'FORTE' : 'PESADO') + ' ▶', onLeft: () => { st.build = Math.max(0.86, +(st.build - 0.04).toFixed(2)); refresh(); }, onRight: () => { st.build = Math.min(1.22, +(st.build + 0.04).toFixed(2)); refresh(); } },
+      { label: 'ALTURA', sub: () => '◀ ' + Math.round(150 + (st.h - 0.9) * 180) + ' cm ▶', onLeft: () => { st.h = Math.max(0.9, +(st.h - 0.03).toFixed(2)); refresh(); }, onRight: () => { st.h = Math.min(1.08, +(st.h + 0.03).toFixed(2)); refresh(); }, action: () => { st.h = st.h >= 1.08 ? 0.9 : +(st.h + 0.03).toFixed(2); refresh(); } },
+      { label: 'PORTE FÍSICO', sub: () => '◀ ' + (st.build < 0.95 ? 'MAGRO' : st.build < 1.06 ? 'MÉDIO' : st.build < 1.14 ? 'FORTE' : 'PESADO') + ' ▶', onLeft: () => { st.build = Math.max(0.86, +(st.build - 0.04).toFixed(2)); refresh(); }, onRight: () => { st.build = Math.min(1.22, +(st.build + 0.04).toFixed(2)); refresh(); }, action: () => { st.build = st.build >= 1.22 ? 0.86 : +(st.build + 0.04).toFixed(2); refresh(); } },
       { label: 'ÓCULOS', sub: () => st.glasses ? 'SIM' : 'NÃO', onLeft: () => { st.glasses = !st.glasses; refresh(); }, onRight: () => { st.glasses = !st.glasses; refresh(); }, action: () => { st.glasses = !st.glasses; refresh(); } },
       { label: 'BARBA', sub: () => st.fem ? '—' : '◀ ' + BEARD_PT[st.beard] + ' ▶', onLeft: () => { cyc('beard', 3, -1); refresh(); }, onRight: () => { cyc('beard', 3, 1); refresh(); }, action: () => { cyc('beard', 3, 1); refresh(); } },
       { label: 'MARCA', sub: () => st.mark ? 'CICATRIZ' : 'NENHUMA', onLeft: () => { st.mark = !st.mark; refresh(); }, onRight: () => { st.mark = !st.mark; refresh(); }, action: () => { st.mark = !st.mark; refresh(); } },
@@ -90,9 +103,10 @@
           }
           return;
         }
-        if (this.editing) return;
+        if (this.editing || this.prompting) return;
         if (this.skipFrame) { this.skipFrame = false; return; }
         if (R6.Input.actP('back')) { R6.Audio.sfx('back'); R6.Engine.go(opts.season > 1 ? R6.SeasonSelectScene() : R6.MenuScene(), { t: 'fade', dur: 0.6 }); return; }
+        const mm = R6.Input.mouse; if (mm.pressed && U.rectHit(mm.x, mm.y, { x: 200, y: 200, w: 320, h: 380 })) { this.view = (this.view + 1) % 4; this.viewT = 0; R6.Audio.sfx('whoosh', { vol: 0.3 }); }
         if (R6.Input.pressed('KeyQ')) { this.view = (this.view + 3) % 4; this.viewT = 0; }
         if (R6.Input.pressed('KeyE')) { this.view = (this.view + 1) % 4; this.viewT = 0; }
         this.menu.update(dt);
@@ -139,7 +153,8 @@
           R6.UI.text(ctx, (this.buf || '') + (Math.floor(t * 3) % 2 ? '_' : ' '), 640, 375, { size: 38, align: 'center', color: '#fff', fam: this.editing === 'num' ? 'mono' : 'body', weight: 800 });
           R6.UI.text(ctx, 'ENTER confirmar · ESC manter', 640, 412, { size: 13, align: 'center', color: '#777' });
         }
-        R6.UI.hints(ctx, [['↑↓', 'opção'], ['←→', 'alterar'], ['Q/E', 'girar'], ['ENTER', 'selecionar'], ['ESC', 'voltar']], 60, R6.H - 26, {});
+        if (R6.Input.lastDevice === 'touch') R6.UI.text(ctx, 'Toque numa opção para alterar · toque no personagem para girar', 60, R6.H - 22, { size: 14, color: '#aaa', weight: 700 });
+        else R6.UI.hints(ctx, [['↑↓', 'opção'], ['←→', 'alterar'], ['Q/E', 'girar'], ['ENTER', 'selecionar'], ['ESC', 'voltar']], 60, R6.H - 26, {});
         R6.UI.text(ctx, 'Dentro dos jogos, todos vestem o mesmo uniforme verde com o número no peito.', 1230, R6.H - 22, { size: 13, align: 'right', color: '#777' });
         if (this.leaving) { const a = U.clamp((this.leaveT - 0.4) / 1.1, 0, 1); ctx.fillStyle = 'rgba(0,0,0,' + a + ')'; ctx.fillRect(0, 0, R6.W, R6.H); if (this.leaveT < 1.2) R6.UI.text(ctx, 'CONTRATO ASSINADO', 640, 360, { size: 60, fam: 'title', align: 'center', base: 'middle', color: '#e8336d', alpha: Math.min(1, this.leaveT * 3) * (1 - a * 0.5), spacing: 8 }); }
       },

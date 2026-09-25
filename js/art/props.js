@@ -198,8 +198,15 @@
       ctx.fillStyle = o.occupied && o.occupied[i] ? '#cfd6d8' : '#e9ece8';
       ctx.fillRect(x + 3, by - d - 10, w - 6, d);
       ctx.fillStyle = '#f7f8f4'; ctx.fillRect(x + 4, by - d - 10, 16, d); // pillow
-      // blanket
-      ctx.fillStyle = '#9fb3b8'; ctx.fillRect(x + w * 0.45, by - d - 10, w * 0.5, d);
+      // blanket (a sleeper lies under it with the head on the pillow)
+      const sl = o.sleepers && o.sleepers[i];
+      if (sl) {
+        const cy = by - d - 10 + d / 2, br = Math.sin((o.t || 0) * 1.4 + i) * 0.6;
+        ctx.fillStyle = '#2b7d71'; ctx.beginPath(); ctx.moveTo(x + 20, cy - d * 0.36 - br); ctx.quadraticCurveTo(x + w * 0.5, cy - d * 0.5 - br, x + w - 8, cy - d * 0.3); ctx.lineTo(x + w - 8, cy + d * 0.34); ctx.lineTo(x + 20, cy + d * 0.38); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x + 20, cy - d * 0.36 - br, 3, d * 0.74);
+        ctx.fillStyle = sl.skin || '#dcae87'; ctx.beginPath(); ctx.arc(x + 13, cy, 6.5, 0, U.TAU); ctx.fill();
+        if (sl.hs !== 'bald') { ctx.fillStyle = sl.hair || '#1d1612'; ctx.beginPath(); ctx.arc(x + 11, cy, 6.8, Math.PI * 0.5, Math.PI * 1.5); ctx.fill(); }
+      } else { ctx.fillStyle = '#9fb3b8'; ctx.fillRect(x + w * 0.45, by - d - 10, w * 0.5, d); }
       // side face
       ctx.fillStyle = frame; ctx.fillRect(x, by - 10, w, 6);
       ctx.fillStyle = frameD; ctx.fillRect(x, by - 4, w, 2);
@@ -292,6 +299,39 @@
     ctx.fillStyle = '#0b0d10'; ctx.fillRect(x, y, w, h); ctx.strokeStyle = '#2a2e35'; ctx.lineWidth = 4; ctx.strokeRect(x, y, w, h);
     ctx.fillStyle = 'rgba(255,255,255,.03)'; for (let i = 0; i < h; i += 4) ctx.fillRect(x, y + i, w, 1);
     lines.forEach((l, i) => R6.UI.text(ctx, l.t, x + w / 2, y + (i + 1) * h / (lines.length + 1), { size: l.s || 22, align: 'center', base: 'middle', color: l.c || '#ff4d6d', fam: 'mono', weight: 400, shadow: U.rgba(l.c || '#ff4d6d', 0.8), shadowBlur: 10, shadowY: 0 }));
+    ctx.restore();
+  };
+
+  // a chair drawn under a seated character. x = hip x, gy = ground y under the feet, sc = character scale,
+  // dir = facing (the backrest sits behind the back), style: wood | metal | plush | leather | stool
+  const CHAIR = {
+    wood: { seat: '#6b4b33', dark: '#4a3322', hi: '#8a6446' }, metal: { seat: '#7b828b', dark: '#50565e', hi: '#a3aab2' },
+    plush: { seat: '#7a1f2e', dark: '#4a0f1a', hi: '#c9a13b' }, leather: { seat: '#2a2622', dark: '#141110', hi: '#4a4238' }, stool: { seat: '#8a5a3a', dark: '#5b3a24', hi: '#a8744c' },
+  };
+  Props.CHAIR_TOP = 24; // seat top in character units (hip bottom of the sit pose)
+  Props.chair = function (ctx, x, gy, sc, dir = 1, style = 'wood', view = 'side') {
+    const C = CHAIR[style] || CHAIR.wood; const top = gy - Props.CHAIR_TOP * sc, th = 4 * sc;
+    ctx.save();
+    if (view === 'side') {
+      const back = x - 13 * sc * dir, front = x + 17 * sc * dir, l = Math.min(back, front), w = Math.abs(front - back);
+      // legs
+      ctx.fillStyle = C.dark; ctx.fillRect(back - (dir > 0 ? 0 : 3 * sc), top + th, 3 * sc, gy - top - th); ctx.fillRect(front - (dir > 0 ? 3 * sc : 0), top + th, 3 * sc, gy - top - th);
+      if (style !== 'stool') {
+        // backrest rising from the rear edge
+        const bx = dir > 0 ? back : back - 3.5 * sc; // post just behind the hips
+        ctx.fillStyle = C.dark; ctx.fillRect(bx, top - 38 * sc, 3.5 * sc, 38 * sc);
+        ctx.fillStyle = C.seat; ctx.fillRect(bx - 0.75 * sc, top - 36 * sc, 5 * sc, 22 * sc);
+        if (style === 'plush') { ctx.fillStyle = C.hi; ctx.fillRect(bx - 1.5 * sc, top - 39 * sc, 6.5 * sc, 2.5 * sc); }
+      }
+      // seat
+      ctx.fillStyle = C.seat; ctx.fillRect(l, top, w, th); ctx.fillStyle = C.hi; ctx.globalAlpha *= 0.5; ctx.fillRect(l, top, w, 1.2 * sc);
+    } else {
+      // front / back view: seat under the body, backrest behind the torso, splayed legs
+      const hw = 15 * sc;
+      if (style !== 'stool') { ctx.fillStyle = C.dark; ctx.fillRect(x - hw, top - 40 * sc, 3 * sc, 40 * sc); ctx.fillRect(x + hw - 3 * sc, top - 40 * sc, 3 * sc, 40 * sc); ctx.fillStyle = C.seat; ctx.fillRect(x - hw, top - 40 * sc, hw * 2, 9 * sc); if (style === 'plush') { ctx.fillStyle = C.hi; ctx.fillRect(x - hw, top - 41 * sc, hw * 2, 2 * sc); } }
+      ctx.fillStyle = C.dark; ctx.fillRect(x - hw + 1 * sc, top + th, 3 * sc, gy - top - th); ctx.fillRect(x + hw - 4 * sc, top + th, 3 * sc, gy - top - th);
+      ctx.fillStyle = C.seat; ctx.fillRect(x - hw - 1 * sc, top, hw * 2 + 2 * sc, th + 1 * sc);
+    }
     ctx.restore();
   };
 
