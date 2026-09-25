@@ -66,7 +66,7 @@
       if (!this.result) return false;
       this.resultT += dt;
       const wait = this.result === 'win' ? (this.resultInfo.wait || 3.4) : (this.resultInfo.wait || 3.0);
-      if (this.resultT >= wait && !this._left) { this._left = true; this.leave(); }
+      if ((this.resultT >= wait || (this.resultT > 1.2 && (R6.Input.actP('confirm') || R6.Input.mouse.pressed))) && !this._left) { this._left = true; this.leave(); }
       return true;
     }
     leave() {

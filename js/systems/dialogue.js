@@ -35,13 +35,18 @@
     update(dt) {
       if (!D.active || !D.cur) return;
       const L = D.cur; const I = R6.Input;
-      const speed = 45 * (R6.Save.settings.textSpeed || 1) * (L.mode === 'announce' ? 0.8 : 1);
+      const speed = 68 * (R6.Save.settings.textSpeed || 1) * (L.mode === 'announce' ? 0.9 : 1);
       D.t += dt;
       const before = Math.floor(D.shown);
       D.shown = Math.min(L.text.length, D.shown + dt * speed * (I.act('ff') && D.t > 0.25 ? 3 : 1));
       if (Math.floor(D.shown) > before && Math.floor(D.shown) % 3 === 0 && L.mode !== 'narr') R6.Audio.sfx('type', { vol: 0.35, gap: 0.04 });
       const done = D.shown >= L.text.length;
-      if (L.auto) { if (done) { D.hold += dt; if (D.hold > L.auto) D.finish(); } return; }
+      if (L.auto) {
+        // timed announcements: a press shows the whole text, a second press closes it
+        if (!done && I.actP('confirm') && D.t > 0.2) D.shown = L.text.length;
+        else if (done) { D.hold += dt; if (D.hold > L.auto || (D.hold > 0.25 && (I.actP('confirm') || I.actP('interact')))) D.finish(); }
+        return;
+      }
       if (L.choices) {
         if (!done) { if (I.confirmP()) D.shown = L.text.length; return; }
         const n = L.choices.length;

@@ -66,6 +66,8 @@
   }
 
   // ---------------- script runner ----------------
+  // PACE shortens every timed beat (pauses, captions, camera moves, fades); ENTER/SPACE/E/click/tap finishes the current beat at once
+  const PACE = 0.7;
   class Runner {
     constructor(host, steps, onEnd, parent) {
       this.host = host; this.steps = steps || []; this.i = 0; this.cur = null; this.done = false; this.onEnd = onEnd; this.parent = parent;
@@ -80,7 +82,13 @@
       if (!this.parent) this.updateRoot(dt);
       let guard = 0;
       while (!this.done && guard++ < 400) {
-        if (this.cur) { const fin = this.cur.update(this.skipping && !this.cur.noSkip ? 99 : dt); if (!fin) return; this.cur = null; dt = 0; }
+        if (this.cur) {
+          const R = this.root, hurry = R.hurry && !this.cur.noSkip;
+          const fin = this.cur.update((this.skipping || hurry) && !this.cur.noSkip ? 99 : dt);
+          if (!fin) return;
+          if (hurry) R.hurry = false; // one press finishes one beat
+          this.cur = null; dt = 0;
+        }
         if (this.i >= this.steps.length) { this.finish(); return; }
         const st = this.steps[this.i++];
         if (!st) continue;
@@ -91,6 +99,14 @@
       this.lb = U.approach(this.lb, this.lbTarget, dt * 2.5);
       if (this.fadeA !== this.fadeTarget) this.fadeA = U.approach(this.fadeA, this.fadeTarget, dt * this.fadeSpeed);
       if (this.caption) { this.caption.t += dt; if (this.caption.t > this.caption.dur) this.caption = null; }
+      // advance: a press while no dialogue box is open (and not the press that just closed one) hurries the current beat
+      const I = R6.Input, press = I.actP('confirm') || I.actP('interact') || I.mouse.pressed;
+      this.hurry = !!(press && !R6.Dialog.active && !this.dlgWas && !this.skipping && this.host.skippable !== false);
+      this.dlgWas = R6.Dialog.active;
+      if (this.hurry) {
+        if (this.caption) this.caption.dur = Math.min(this.caption.dur, this.caption.t + 0.25);
+        const b = R6.Banner.list[0]; if (b) b.dur = Math.min(b.dur, b.t + 0.3);
+      }
       // skip: hold ESC
       if (!this.skipping && this.host.skippable !== false) {
         if (R6.Input.act('skip') && !R6.Dialog.cur?.choices) { this.skipHold += dt; if (this.skipHold > 0.7) this.skip(); }
@@ -110,7 +126,7 @@
     }
     sub(steps) { return new Runner(this.host, steps, null, this); }
     task(fn, noSkip) { return { update: fn, noSkip }; }
-    waitTask(sec) { let t = 0; return this.task(dt => (t += dt) >= sec); }
+    waitTask(sec) { let t = 0; const d = sec * PACE; return this.task(dt => (t += dt) >= d); }
     speaker(who) {
       if (who == null) return null;
       if (typeof who === 'object') return who.p || who;
@@ -125,7 +141,7 @@
       if (st.wait != null) return sk ? null : this.waitTask(st.wait);
       if (st.goto) { const k = this.labels[st.goto]; if (k != null) this.i = k; return null; }
       if (st.if) { const branch = st.if(R6.State, host) ? st.then : st.else; if (!branch) return null; const r = this.sub(branch); return this.task(dt => { r.update(dt); return r.done; }); }
-      if (st.par) { const rs = st.par.map(s => this.sub(s)); return this.task(dt => { rs.forEach(r => r.update(dt)); return rs.every(r => r.done); }); }
+      if (st.par) { const rs = st.par.map(s => this.sub(s)); return this.task(dt => { const R = this.root, h = dt >= 99 && !this.skipping; rs.forEach(r => { if (h) R.hurry = true; r.update(dt); }); if (h) R.hurry = false; return rs.every(r => r.done); }); }
       if (st.call) { const res = st.call(host, this); if (res && res.update) return res; return null; }
       if (st.set) { for (const k in st.set) R6.State.flag(k, st.set[k]); return null; }
       if (st.give) { R6.State.give(st.give, st.n || 1); return null; }
@@ -170,20 +186,20 @@
           if (sk) { a.x = to[0]; a.y = to[1]; a.stop(); return null; }
           let fin = false; a.goTo(host.world, to[0], to[1], st.run, () => { fin = true; if (st.face) a.face(st.face); });
           if (st.async) return null;
-          let tt = 0; return this.task(dt => { tt += dt; if (this.skipping) { a.x = to[0]; a.y = to[1]; a.stop(); if (st.face) a.face(st.face); return true; } if (tt > (st.timeout || 20)) { a.stop(); return true; } return fin; });
+          let tt = 0; return this.task(dt => { tt += dt; if (this.skipping || dt >= 99) { a.x = to[0]; a.y = to[1]; a.stop(); if (st.face) a.face(st.face); return true; } if (tt > (st.timeout || 20)) { a.stop(); return true; } return fin; });
         } else {
           if (sk) { a.x = to[0]; if (to[1] != null) a.z = to[1]; a.target = null; a.anim = 'idle'; if (st.face) a.dir = st.face; return null; }
           if (st.speed) a.speedMul = st.speed;
           a.walkTo(to[0], to[1], st.run);
           if (st.async) return null;
-          return this.task(() => { if (this.skipping && a.target) { a.x = a.target.x; a.z = a.target.z; a.target = null; a.anim = 'idle'; } if (!a.target && st.face) a.dir = st.face; return !a.target; });
+          return this.task(dt => { if ((this.skipping || dt >= 99) && a.target) { a.x = a.target.x; a.z = a.target.z; a.target = null; if (!a.holdAnim) a.anim = 'idle'; } if (!a.target && st.face) a.dir = st.face; return !a.target; });
         }
       }
       if (st.face) { const a = this.actor(st.face); if (a) { if (a.goTo) { if (st.to) a.faceTo(...st.to); else a.face(st.dir); } else { if (st.view) a.view = st.view; if (st.dir) a.dir = st.dir; if (st.toward) { const b = this.actor(st.toward); if (b) a.dir = b.x > a.x ? 1 : -1; } } } return null; }
       if (st.anim) {
         const a = this.actor(st.anim); if (!a) return null;
         if (a.setAnim) { a.setAnim(st.name, st.keep ? 0 : (st.hold || 0)); } else { a.anim = st.name; a.animT = 0; a.holdAnim = st.keep ? st.name : null; if (a.setSeatFor) a.setSeatFor(st.name); }
-        if (st.hold && !sk) { const h = st.hold; return this.task(((t) => dt => (t += dt) >= h)(0)); }
+        if (st.hold && !sk) { const h = st.hold * PACE; return this.task(((t) => dt => (t += dt) >= h)(0)); }
         return null;
       }
       if (st.expr) { const a = this.actor(st.expr); if (a) a.expr = st.e; return null; }
@@ -191,19 +207,19 @@
       if (st.view) { const a = this.actor(st.view); if (a) a.view = st.v; return null; }
       if (st.show) { const a = this.actor(st.show); if (a) { a.visible = true; } return null; }
       if (st.hide) { const a = this.actor(st.hide); if (a) a.visible = false; return null; }
-      if (st.alpha) { const a = this.actor(st.alpha); if (!a) return null; const to = st.v, dur = st.dur || 0.8; if (sk) { a.alpha = to; return null; } const from = a.alpha; let t = 0; return this.task(dt => { t += dt; a.alpha = U.lerp(from, to, Math.min(1, t / dur)); return t >= dur || !!st.async; }); }
+      if (st.alpha) { const a = this.actor(st.alpha); if (!a) return null; const to = st.v, dur = (st.dur || 0.8) * PACE; if (sk) { a.alpha = to; return null; } const from = a.alpha; let t = 0; return this.task(dt => { t += dt; a.alpha = U.lerp(from, to, Math.min(1, t / dur)); return t >= dur || !!st.async; }); }
       if (st.cam) {
         const c = host.cam; const [x, y, z] = st.cam;
         if (sk || !st.dur) { c.set(x != null ? x : c.x, y != null ? y : c.y, z || c.zoom); host.camTarget = null; return null; }
-        host.camTarget = null; c.to(x, y, z, st.dur, st.ease ? U.ease[st.ease] : undefined);
-        if (st.async) return null; return this.task(() => !c.busy);
+        host.camTarget = null; c.to(x, y, z, st.dur * PACE, st.ease ? U.ease[st.ease] : undefined);
+        if (st.async) return null; return this.task(dt => { if (dt >= 99 && c.tween) c.set(c.tween.x1, c.tween.y1, c.tween.z1); return !c.busy; });
       }
       if (st.camFollow !== undefined) { host.camTarget = st.camFollow ? this.actor(st.camFollow) : null; if (st.zoom) host.cam.tzoom = st.zoom; if (st.offY != null) host.camOffY = st.offY; return null; }
       if (st.shake) { if (!sk) host.cam.shake(st.shake, st.dur || 0.4); return null; }
       if (st.fade) {
-        R.fadeColor = st.color || '#000'; R.fadeTarget = st.fade === 'out' ? 1 : 0; R.fadeSpeed = 1 / (st.dur || 0.8);
+        R.fadeColor = st.color || '#000'; R.fadeTarget = st.fade === 'out' ? 1 : 0; R.fadeSpeed = 1 / ((st.dur || 0.8) * PACE);
         if (sk) { if (!this.root.skipping) R.fadeA = R.fadeTarget; return null; }
-        if (st.async) return null; return this.task(() => R.fadeA === R.fadeTarget);
+        if (st.async) return null; return this.task(dt => { if (dt >= 99 && !this.skipping) R.fadeA = R.fadeTarget; return R.fadeA === R.fadeTarget; });
       }
       if (st.sfx) { if (!sk) R6.Audio.sfx(st.sfx, { vol: st.vol, gap: st.gap }); return null; }
       if (st.music !== undefined) { if (st.music) R6.Music.play(st.music, st.dur || 1.5); else R6.Music.stop(st.dur || 1.5); if (st.intensity != null) R6.Music.setIntensity(st.intensity); return null; }
@@ -211,8 +227,8 @@
       if (st.stopLoop) { R6.Audio.stopLoop(st.stopLoop); return null; }
       if (st.slowmo) { if (!sk) R6.Engine.slowmo(st.slowmo, st.dur || 1); return null; }
       if (st.flash) { if (!sk) R6.Engine.flash(st.flash, st.dur || 0.3); return null; }
-      if (st.banner) { if (sk) return null; R6.Banner.show(st.banner, st.sub, { style: st.style, dur: st.dur, color: st.color, big: st.big }); return st.wait === false ? null : this.waitTask((st.dur || 2.6) * (st.hold || 0.85)); }
-      if (st.caption) { if (sk) return null; R.caption = { text: st.caption, sub: st.sub, t: 0, dur: st.dur || 3.4, big: st.big }; return st.async ? null : this.waitTask(st.dur || 3.4); }
+      if (st.banner) { if (sk) return null; R6.Banner.show(st.banner, st.sub, { style: st.style, dur: (st.dur || 2.6) * PACE, color: st.color, big: st.big }); return st.wait === false ? null : this.waitTask((st.dur || 2.6) * (st.hold || 0.85)); }
+      if (st.caption) { if (sk) return null; R.caption = { text: st.caption, sub: st.sub, t: 0, dur: (st.dur || 3.4) * PACE, big: st.big }; return st.async ? null : this.waitTask(st.dur || 3.4); }
       if (st.emote) { const a = this.actor(st.emote); if (a && !sk) a.emo(st.icon, st.dur); return null; }
       if (st.bubble) { const a = this.actor(st.bubble); if (a && !sk) a.say(st.text, st.dur || 2.6); return st.wait && !sk ? this.waitTask(st.wait) : null; }
       if (st.spawn) { host.spawn(st); return null; }
@@ -243,7 +259,7 @@
         ctx.strokeStyle = '#e8336d'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(R6.W - 150, R6.H - 35, 10, -Math.PI / 2, -Math.PI / 2 + U.TAU * Math.min(1, R.skipHold / 0.7)); ctx.stroke();
         ctx.restore();
       } else if (!R.skipping && R.lb > 0.5 && this.host.skippable !== false) {
-        ctx.save(); ctx.globalAlpha = 0.45; R6.UI.text(ctx, 'Segure ESC para pular · P pausa', R6.W - 24, R6.H - 26, { size: 13, align: 'right', color: '#bbb' }); ctx.restore();
+        ctx.save(); ctx.globalAlpha = 0.45; R6.UI.text(ctx, (R6.Touch && R6.Touch.on ? 'Toque para avançar' : 'ENTER avança') + ' · segure ESC para pular a cena · P pausa', R6.W - 24, R6.H - 26, { size: 13, align: 'right', color: '#bbb' }); ctx.restore();
       }
     }
   }

@@ -148,7 +148,7 @@
       const host = { cam: this.cam, world: this.world, fx: this.world.fx, getActor: id => this.getActor(id), spawn: d => this.spawn2(d), despawn: id => this.despawn(id), eliminate: (id, st) => this.eliminate(id, st), letterbox: 1, get camTarget() { return null; }, set camTarget(v) { } };
       this.runner = new R6.Runner(host, steps, () => { this.runner = null; onEnd && onEnd(); });
     }
-    get busy() { return !!this.runner || R6.Dialog.active; }
+    get busy() { return !!this.runner || (R6.Dialog.active && !(R6.Dialog.cur && R6.Dialog.cur.auto)); }
     // ---------- lifecycle ----------
     enter() {
       R6.Elim.reset();
@@ -420,7 +420,7 @@
       V.t += dt;
       if (V.t < 3.6) return;
       if (V.waiting) return;
-      V.acc = (V.acc || 0) + dt;
+      V.acc = (V.acc || 0) + dt * (R6.Input.act('confirm') || R6.Input.mouse.down ? 7 : 1); // hold ENTER / touch to speed up the count
       while (V.acc > V.speed && V.i <= V.list.length) {
         V.acc -= V.speed;
         const next = V.list[V.i];
@@ -560,7 +560,7 @@
           R6.UI.panel(ctx, 16, 96, 300, 20 + this.tasks.length * 22, { fill: 'rgba(6,8,12,.7)', shadow: false });
           this.tasks.forEach((tk, i) => R6.UI.text(ctx, (tk.done ? '✓ ' : '○ ') + tk.text, 28, 118 + i * 22, { size: 14, weight: 700, color: tk.done ? '#2ec4b6' : tk.optional ? '#999' : '#eee', maxW: 280 }));
         }
-        if (this.vote) this.drawVoteUI(ctx);
+        if (this.vote) { this.drawVoteUI(ctx); if (!R6.Dialog.active && this.vote.t > 3.6 && !this.vote.done) R6.UI.text(ctx, R6.Input.lastDevice === 'touch' ? 'Segure a tela para acelerar a contagem' : 'Segure ENTER para acelerar a contagem', 640, R6.H - 160, { size: 14, align: 'center', color: '#bbb', weight: 700 }); }
         if (this.showRelations) this.drawRelations(ctx);
         else if (!this.vote && !this.riot) R6.UI.text(ctx, 'TAB: relações', R6.W - 20, R6.H - 18, { size: 13, align: 'right', color: '#888' });
       }
