@@ -44,7 +44,7 @@
     }
     goTo(world, x, y, run = false, cb = null) {
       this.goal = { x, y }; this.running = run; this.onArrive = cb;
-      const path = world.map ? world.map.findPath(this.x, this.y, x, y, 8000, { doors: this.canOpenDoors }) : [{ x, y }];
+      const path = world.map ? world.map.findPath(this.x, this.y, x, y, 8000, { doors: this.canOpenDoors, key: this.doorKey }) : [{ x, y }];
       this.path = path || [{ x, y }]; this.pathI = 0; this.repath = 1.5 + Math.random();
       return !!path;
     }

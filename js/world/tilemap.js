@@ -97,7 +97,7 @@
       const s = this.tileOf(sx, sy), g = this.tileOf(gx, gy);
       if (!this.inb(g.tx, g.ty)) return null;
       const passDoors = opts.doors; // treat closed unlocked doors as passable
-      const walk = (tx, ty) => { const v = this.get(tx, ty); if (v === T.DOOR && passDoors) { const d = this.doorAt(tx, ty); return d && !d.locked; } return v !== T.WALL && v !== T.DOOR && v !== T.LOW && v !== T.VOID; };
+      const walk = (tx, ty) => { const v = this.get(tx, ty); if (v === T.DOOR && passDoors) { const d = this.doorAt(tx, ty); return d && (!d.locked || (opts.key && d.key === opts.key)); } return v !== T.WALL && v !== T.DOOR && v !== T.LOW && v !== T.VOID; };
       if (!walk(g.tx, g.ty)) { const nf = this.nearestFree(gx, gy); const t2 = this.tileOf(nf.x, nf.y); g.tx = t2.tx; g.ty = t2.ty; }
       const W = this.w, N = this.w * this.h;
       const start = s.ty * W + s.tx, goal = g.ty * W + g.tx;
