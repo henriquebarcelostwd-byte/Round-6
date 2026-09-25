@@ -141,7 +141,7 @@
       const scene = {
         name: 'results', t: 0, pausable: false,
         menu: new R6.UI.Menu([
-          { label: 'JOGAR NOVAMENTE', icon: 'circle', action: () => { const def = R6.Games[game.gameId] || (R6.EXTRAS && R6.EXTRAS.find(e => e.id === game.extraId)); if (def) R6.Engine.go(def.create(Object.assign({}, game.opts)), { t: 'fade' }); } },
+          { label: 'JOGAR NOVAMENTE', icon: 'circle', action: () => { const def = (game.extraId && R6.EXTRAS && R6.EXTRAS.find(e => e.id === game.extraId)) || R6.Games[game.gameId]; if (def) R6.Engine.go(def.create(Object.assign({}, game.opts)), { t: 'fade' }); } },
           { label: 'VOLTAR', icon: 'square', action: () => R6.Engine.go(game.mode === 'extra' ? R6.ExtrasScene() : R6.GameSelectScene(), { t: 'fade' }) },
         ]),
         enter() { R6.Music.play(won ? 'victory' : 'sad'); },
